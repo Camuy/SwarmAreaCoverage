@@ -40,6 +40,7 @@ The repo is divided in 3 important files:
 - app.py
 - environment.py
 - agent.py
+
 is possible to have other files that changes informatiotion on these files, like the information of the gradient on the environment.
 
 ### app.py
