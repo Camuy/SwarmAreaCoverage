@@ -16,11 +16,11 @@ Mesa required all this library, if you install only Mesa you are not able to use
 This repository is basedo on python 3.12.9. It should work also with the version 3.11.0 and older.
 
 First of all you must upgrade all packages.
-<pre><code class="language-bash">pip install --upgrade pip
+<pre><code class="language-bash">  pip install --upgrade pip
 </code></pre>
   
 In a terminal you execute this commands to install all the dependency:
-<pre><code class="language-bash">pip install mesa
+<pre><code class="language-bash">  pip install mesa
   pip install solara
   pip install matplotlib
   pip install numpy
@@ -31,7 +31,9 @@ Once you have installed all the dependencies, you can clone this repository and 
 
 to clone the repository you must have git installed.
 
-<pre><code class="language-bash">pip install git\ngit clone https://github.com/Camuy/SwarmAreaCoverage.git</code></pre>
+<pre><code class="language-bash">  pip install git
+  git clone https://github.com/Camuy/SwarmAreaCoverage.git
+</code></pre>
 
 ## Usage
 The repo is divided in 3 important files:
@@ -51,4 +53,4 @@ It create all the instruction each singlre agent has to follow. It besically dic
 
 ## Run
 To run the code you simply have to run this code.
-<pre><code class="language-bash">solara run app.py</code></pre>
+<pre><code class="language-bash">  solara run app.py</code></pre>
