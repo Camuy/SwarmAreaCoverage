@@ -20,11 +20,7 @@ First of all you must upgrade all packages.
 </code></pre>
   
 In a terminal you execute this commands to install all the dependency:
-<pre><code class="language-bash">  pip install mesa
-  pip install solara
-  pip install matplotlib
-  pip install numpy
-  pip install scypy
+<pre><code class="language-bash">  pip install -r requirements.txt
 </code></pre>
 
 Once you have installed all the dependencies, you can clone this repository and perform the simulation.
