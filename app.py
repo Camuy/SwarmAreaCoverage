@@ -1,38 +1,73 @@
-import solara
-from  mesa_viz_tornado.ModularVisualization import ModularServer 
-from mesa_viz_tornado.modules import CanvasGrid, ChartModule
+import os
+import sys
 
-from model import EnergyModel  # <-- lo creiamo dopo
-from agents import EnergyAgent  # <-- lo creiamo dopo
+sys.path.insert(0, os.path.abspath("../../../.."))
 
-# Funzione per disegnare gli agenti sulla griglia
-def agent_portrayal(agent):
-    portrayal = {
-        "Shape": "circle",
-        "Filled": "true",
-        "r": 0.5,
-        "Color": "red",
-        "Layer": 0,
-    }
-    return portrayal
+from model import WECswarm
+from mesa.visualization import Slider, SolaraViz, make_space_component
 
-# Visualizzazione
-grid = CanvasGrid(agent_portrayal, 10, 10, 500, 500)
+# Pre-compute markers for different angles (e.g., every 10 degrees)
 
-# Modulo per i grafici (esempio, modificabile)
-chart = ChartModule([{"Label": "count", "Color": "black"}])
 
-# Server
-server = ModularServer(
-    EnergyModel,
-    [grid, chart],
-    "Area Coverage",
-    {"width": 10, "height": 10},
+def boid_draw(agent):
+    neighbors = len(agent.neighbors)
+
+    # Calculate the angle
+    deg = agent.angle
+    # Round to nearest 10 degrees
+    rounded_deg = round(deg / 10) * 10 % 360
+
+    # using cached markers to speed things up
+    if neighbors <= 1:
+        return {"color": "red", "size": 20}
+    elif neighbors >= 2:
+        return {"color": "green", "size": 20}
+
+
+model_params = {
+    "seed": {
+        "type": "InputText",
+        "value": 42,
+        "label": "Random Seed",
+    },
+    "population_size": Slider(
+        label="Number of boids",
+        value=100,
+        min=10,
+        max=200,
+        step=10,
+    ),
+    "width": 100,
+    "height": 100,
+    "speed": Slider(
+        label="Speed of Boids",
+        value=5,
+        min=1,
+        max=20,
+        step=1,
+    ),
+    "vision": Slider(
+        label="Vision of Bird (radius)",
+        value=10,
+        min=1,
+        max=50,
+        step=1,
+    ),
+    "separation": Slider(
+        label="Minimum Separation",
+        value=2,
+        min=1,
+        max=300,
+        step=1,
+    ),
+}
+
+model = WECswarm()
+
+page = SolaraViz(
+    model,
+    components=[make_space_component(agent_portrayal=boid_draw, backend="matplotlib")],
+    model_params=model_params,
+    name="Boid Flocking Model",
 )
-#
-# App Solara
-@solara.component
-def Page():
-    solara.Title("Mesa + Solara Demo")
-    solara.Markdown("## Simulation Interface")
-    solara.Button("Start simulation", on_click=lambda: server.launch())
+page  # noqa
