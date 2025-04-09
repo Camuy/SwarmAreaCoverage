@@ -53,3 +53,5 @@ It create all the instruction each singlre agent has to follow. It besically dic
 ## Run
 To run the code you simply have to run this code.
 <pre><code class="language-bash">  solara run app.py</code></pre>
+
+the simulation will be launched and you can see it on a web page, so in a browser serach for [http://localhost:8765](http://localhost:8765)
