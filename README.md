@@ -15,12 +15,8 @@ Mesa required all this library, if you install only Mesa you are not able to use
 ## Install
 This repository is basedo on python 3.12.9. It should work also with the version 3.11.0 and older.
 
-First of all you must upgrade all packages.
+First of all you must upgrade all packages, and if you don't have pip you must install it.
 <pre><code class="language-bash">  pip install --upgrade pip
-</code></pre>
-  
-In a terminal you execute this commands to install all the dependency:
-<pre><code class="language-bash">  pip install -r requirements.txt
 </code></pre>
 
 Once you have installed all the dependencies, you can clone this repository and perform the simulation.
@@ -31,10 +27,16 @@ to clone the repository you must have git installed.
   git clone https://github.com/Camuy/SwarmAreaCoverage.git
 </code></pre>
 
+In a terminal you execute this commands to install all the dependency:
+<pre><code class="language-bash">  pip install -r requirements.txt
+</code></pre>
+
+Now ypou should able to run the simulation
+
 ## Usage
 The repo is divided in 3 important files:
 - app.py
-- environment.py
+- model.py
 - agent.py
 
 is possible to have other files that changes informatiotion on these files, like the information of the gradient on the environment.
@@ -42,8 +44,8 @@ is possible to have other files that changes informatiotion on these files, like
 ### app.py
 It create the enviroment on top of whom the other codes are run. It gives you the information to access the [localhost at port 8765](http://localhost:8765) to get access to the simulation itself.
 
-### environment.py
-It is a file responsable of creating the information on the simulation environment.
+### model.py
+It is a file responsable of creating the information on the simulation environment and mathematical model.
 
 ### agent.py
 It create all the instruction each singlre agent has to follow. It besically dictate the role to be followed by the agent.
