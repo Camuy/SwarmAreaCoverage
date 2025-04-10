@@ -90,6 +90,11 @@ class WEC(ContinuousSpaceAgent):
 
         # Move boid
         self.move()
+    
+    def get_power(self):
+
+        return
+        
 
 
     def move(self):

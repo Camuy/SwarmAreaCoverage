@@ -16,6 +16,7 @@ import numpy as np
 from mesa import Model
 from agents import WEC
 from mesa.experimental.continuous_space import ContinuousSpace
+from mesa.space import PropertyLayer
 
 
 class WECswarm(Model):
