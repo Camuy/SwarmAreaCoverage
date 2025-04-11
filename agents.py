@@ -8,7 +8,6 @@ import numpy as np
 
 from mesa.experimental.continuous_space import ContinuousSpaceAgent
 
-
 class WEC(ContinuousSpaceAgent):
     """A Boid-style flocker agent.
 
@@ -35,6 +34,9 @@ class WEC(ContinuousSpaceAgent):
         cohere=0.03,
         separate=0.015,
         match=0.05,
+        power: float = 0,
+        battery: int = 50,
+        consume: int = 1
     ):
         """Create a new Boid flocker agent.
 
@@ -52,64 +54,88 @@ class WEC(ContinuousSpaceAgent):
         self.position = position
         self.speed = speed
         self.direction = direction
-        self.vision = vision
+        self.vision = vision ## radius of comunication
         self.separation = separation
         self.cohere_factor = cohere
         self.separate_factor = separate
         self.match_factor = match
         self.neighbors = []
         self.angle = 0.0  # represents the angle at which the boid is moving
+        self.power = self.get_power(self.position)
+        self.battery = battery
+        self.consume = consume ## rate of usage of the battery to move
 
     def step(self):
-        """Get the Boid's neighbors, compute the new vector, and move accordingly."""
+        # get updates
+        self.power = self.get_power(self.position)
+        
         neighbors, distances = self.get_neighbors_in_radius(radius=self.vision)
         self.neighbors = [n for n in neighbors if n is not self]
-
+        
+        
         # If no neighbors, maintain current direction
         if not neighbors:
             self.move()
             return
-
-        delta = self.space.calculate_difference_vector(self.position, agents=neighbors)
-
-        cohere_vector = delta.sum(axis=0) * self.cohere_factor
-        separation_vector = (
-            -1 * delta[distances < self.separation].sum(axis=0) * self.separate_factor
-        )
-        match_vector = (
-            np.asarray([n.direction for n in neighbors]).sum(axis=0) * self.match_factor
-        )
-
-        # Update direction based on the three behaviors
-        self.direction += (cohere_vector + separation_vector + match_vector) / len(
-            neighbors
-        )
+        
+        # self.neighbors = [n for n in self.neighbors if n.power > self.power] # filtered neigbors visible only if they have major pawer then me
+        
+        targets = self.get_target() # highest power function, i go where the power is higher
+        
+        delta = self.space.calculate_difference_vector(self.position, agents=targets)
+        delta = delta[0]
+        print("delta =", delta)
+        #cohere_vector = delta.sum(axis=0) * self.cohere_factor
+        #separation_vector = (-1 * delta[distances < self.separation].sum(axis=0) * self.separate_factor)
+        #match_vector = (np.asarray([n.direction for n in neighbors]).sum(axis=0) * self.match_factor)
 
         # Normalize direction vector
-        self.direction /= np.linalg.norm(self.direction)
+        norm = np.linalg.norm(delta)
+
+        if norm != 0:
+            self.direction = np.divide(delta, norm)
+        else:
+            self.direction = [0, 0]
+        
+        if targets[0] == self:
+            self.direction = [0, 0]
+            
+        
+        print("direction =", self.direction)
 
         # Move boid
         self.move()
+
+    def get_target(self):
+        target = self.neighbors[0]
+        for n in self.neighbors:
+            if self.model.power.get_power(n.position) > self.model.power.get_power(target.position):
+                target = n
+        return [target]
     
-    def get_power(self):
-
+    def get_power(self, position):
+        self.model.power.get_power(position)
         return
-        
-
+    
+    def get_capacity(self):
+        self.capacity += self.get_power - self.consume * self.speed
+        if self.capacity > 100:
+            self.capacity = 100
+        return
 
     def move(self):
-            position = self.position + self.direction * self.speed
-            if position[0] < self.space.x_min:
-                self.direction[0] = -self.direction[0]
-                position[0] = self.space.x_min
-            if position[0] > self.space.x_max:
-                self.direction[0] = -self.direction[0]
-                position[0] = self.space.x_max
-            if position[1] < self.space.y_min:
-                self.direction[1] = -self.direction[1]
-                position[1] = self.space.y_min
-            if position[1] > self.space.y_max:
-                self.direction[1] = -self.direction[1]
-                position[1] = self.space.y_max
-            self.position = position
-            return 
+        position = self.position + self.direction * self.speed
+        if position[0] < self.space.x_min:
+            self.direction[0] = -self.direction[0]
+            position[0] = self.position[0] + self.direction[0] * self.speed
+        if position[0] > self.space.x_max:
+            self.direction[0] = -self.direction[0]
+            position[0] = self.position[0] + self.direction[0] * self.speed
+        if position[1] < self.space.y_min:
+            self.direction[1] = -self.direction[1]
+            position[1] = self.position[1] + self.direction[1] * self.speed
+        if position[1] > self.space.y_max:
+            self.direction[1] = -self.direction[1]
+            position[1] = self.position[1] + self.direction[1] * self.speed
+        self.position = position
+        return

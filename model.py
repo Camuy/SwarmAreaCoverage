@@ -16,7 +16,8 @@ import numpy as np
 from mesa import Model
 from agents import WEC
 from mesa.experimental.continuous_space import ContinuousSpace
-from mesa.space import PropertyLayer
+
+from environment import Ocean
 
 
 class WECswarm(Model):
@@ -61,6 +62,9 @@ class WECswarm(Model):
             random=self.random,
             n_agents=population_size,
         )
+
+        self.power = Ocean(width=width, height=height, max_power = 1)
+        self.power.modify_ocean()
 
         # Create and place the Boid agents
         positions = self.rng.random(size=(population_size, 2)) * self.space.size
