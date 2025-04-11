@@ -27,7 +27,8 @@ class WEC(ContinuousSpaceAgent):
         model,
         space,
         position=(0, 0),
-        speed=1,
+        max_speed=1,
+        speed = 0,
         direction=(1, 1),
         vision=1,
         separation=1,
@@ -36,8 +37,10 @@ class WEC(ContinuousSpaceAgent):
         match=0.05,
         power: float = 0,
         battery: int = 50,
-        consume: int = 1
-    ):
+        consume: int = 1,
+        efficiency: float = 0.3,
+        WEC_power = 0
+        ):
         """Create a new Boid flocker agent.
 
         Args:
@@ -52,39 +55,49 @@ class WEC(ContinuousSpaceAgent):
         """
         super().__init__(space, model)
         self.position = position
+        self.max_speed = max_speed
         self.speed = speed
         self.direction = direction
         self.vision = vision ## radius of comunication
         self.separation = separation
-        self.cohere_factor = cohere
-        self.separate_factor = separate
-        self.match_factor = match
         self.neighbors = []
         self.angle = 0.0  # represents the angle at which the boid is moving
-        self.power = self.get_power(self.position)
+        self.power = self.model.power.get_power(self.position)
         self.battery = battery
         self.consume = consume ## rate of usage of the battery to move
+        self.efficiency = efficiency
+        self.WEC_power = WEC_power
+
+    def update_status(self):
+        self.neighbors, _ = self.get_neighbors_in_radius(radius=self.vision)
+        self.get_speed()
+        self.model.power.get_power(self.position)
+        self.get_battery()
 
     def step(self):
         # get updates
-        self.power = self.get_power(self.position)
+        self.update_status()
         
-        neighbors, distances = self.get_neighbors_in_radius(radius=self.vision)
-        self.neighbors = [n for n in neighbors if n is not self]
+        self.neighbors = [n for n in self.neighbors if n is not self]
         
         
         # If no neighbors, maintain current direction
-        if not neighbors:
+        if not self.neighbors:
             self.move()
             return
         
         # self.neighbors = [n for n in self.neighbors if n.power > self.power] # filtered neigbors visible only if they have major pawer then me
         
+        self.get_direction()
+        
+        # Move boid
+        self.move()
+    
+    def get_direction(self):
         targets = self.get_target() # highest power function, i go where the power is higher
         
         delta = self.space.calculate_difference_vector(self.position, agents=targets)
-        delta = delta[0]
-        print("delta =", delta)
+        delta = delta[0] + self.agoraphobic()
         #cohere_vector = delta.sum(axis=0) * self.cohere_factor
         #separation_vector = (-1 * delta[distances < self.separation].sum(axis=0) * self.separate_factor)
         #match_vector = (np.asarray([n.direction for n in neighbors]).sum(axis=0) * self.match_factor)
@@ -92,20 +105,17 @@ class WEC(ContinuousSpaceAgent):
         # Normalize direction vector
         norm = np.linalg.norm(delta)
 
-        if norm != 0:
+        if norm > self.separation:
             self.direction = np.divide(delta, norm)
-        else:
-            self.direction = [0, 0]
-        
+        if norm < self.separation:
+            self.agoraphobic()
         if targets[0] == self:
             self.direction = [0, 0]
             
         
         print("direction =", self.direction)
-
-        # Move boid
-        self.move()
-
+        return
+    
     def get_target(self):
         target = self.neighbors[0]
         for n in self.neighbors:
@@ -113,14 +123,33 @@ class WEC(ContinuousSpaceAgent):
                 target = n
         return [target]
     
-    def get_power(self, position):
-        self.model.power.get_power(position)
+    def agoraphobic(self):
+        crawd = []
+        for n in self.neighbors:
+            distance = self.space.calculate_distances(point=self.position, agents=[n])
+            if distance[0] < self.separation:
+                crawd.append(n)
+        delta = self.space.calculate_difference_vector(self.position, agents=crawd)
+        delta = delta[0]
+        norm = np.linalg.norm(delta)
+        self.direction = -np.divide(delta, norm)
+        return self.direction
+    
+    def get_recharge(self):
+        return np.multiply(self.efficiency, self.model.power.get_power(self.position))
+    
+    def get_speed(self):
+        self.speed = np.multiply(np.divide(self.battery, 100), self.max_speed) # linear function, can be sigmoid or others
         return
     
-    def get_capacity(self):
-        self.capacity += self.get_power - self.consume * self.speed
-        if self.capacity > 100:
-            self.capacity = 100
+    def get_consume(self):
+        return (self.speed ** 3) * self.consume
+    
+    def get_battery(self):
+        self.WEC_power = self.get_recharge() - self.get_consume()
+        self.battery += self.get_recharge() - self.get_consume()
+        if self.battery > 100:
+            self.battery = 100
         return
 
     def move(self):

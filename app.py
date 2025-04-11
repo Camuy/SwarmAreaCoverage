@@ -121,8 +121,10 @@ def wec_draw(agent):
     # using cached markers to speed things up
     if neighbors <= 1:
         return {"color": "red", "size": 20}
-    elif neighbors >= 2:
+    elif agent.WEC_power >= 0:
         return {"color": "green", "size": 20}
+    elif agent.WEC_power < 0:
+        return {"color": "yellow", "size": 20}
 
 model_params = {
     "seed": {
@@ -132,7 +134,7 @@ model_params = {
     },
     "population_size": Slider(
         label="Number of WECs",
-        value=30,
+        value=50,
         min=1,
         max=100,
         step=1,
@@ -141,24 +143,31 @@ model_params = {
     "height": 100,
     "speed": Slider(
         label="Max speed of WEC",
-        value=1,
+        value=5,
         min=1,
         max=10,
         step=1,
     ),
     "vision": Slider(
         label="Vision (radius)",
-        value=50,
+        value=30,
         min=1,
-        max=50,
+        max=100,
         step=1,
     ),
     "separation": Slider(
         label="Minimum Separation",
-        value=10,
+        value=20,
         min=1,
-        max=50,
+        max=100,
         step=1,
+    ),
+    "efficiency": Slider(
+        label="Conversion efficiency",
+        value=0.3,
+        min=0,
+        max=1,
+        step=0.01,
     ),
 }
 

@@ -30,10 +30,9 @@ class WECswarm(Model):
         height=100,
         speed=1,
         vision=10,
-        separation=2,
-        cohere=0.03,
+        separation=20,
         separate=0.015,
-        match=0.05,
+        efficiency=0.3,
         seed=None,
     ):
         """Create a new Boids Flocking model.
@@ -74,13 +73,13 @@ class WECswarm(Model):
             population_size,
             self.space,
             position=positions,
+            max_speed=speed,
+            speed = 0,
             direction=directions,
-            cohere=cohere,
             separate=separate,
-            match=match,
-            speed=speed,
             vision=vision,
             separation=separation,
+            efficiency=efficiency,
         )
 
         # For tracking statistics
