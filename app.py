@@ -1,12 +1,113 @@
 import os
 import sys
+import solara
 
 sys.path.insert(0, os.path.abspath("../../../.."))
 
 from model import WECswarm
-from mesa.visualization import Slider, SolaraViz, make_space_component
+from mesa.visualization import Slider, SolaraViz, make_space_component, draw_space, make_plot_component
+from mesa.visualization.utils import update_counter
+from matplotlib import pyplot as plt
+
 
 # Pre-compute markers for different angles (e.g., every 10 degrees)
+def make_space_component(
+    agent_portrayal: None = None,
+    propertylayer_portrayal: dict | None = None,
+    post_process: None = None,
+    backend: str = "matplotlib",
+    **space_drawing_kwargs,
+):
+    
+    if backend == "matplotlib":
+        return make_mpl_space_component(
+            agent_portrayal,
+            propertylayer_portrayal,
+            post_process,
+            **space_drawing_kwargs,
+        )
+    else:
+        raise ValueError(
+            f"unknown backend {backend}, must be one of matplotlib, altair"
+        )
+
+def make_mpl_space_component(
+    agent_portrayal: None = None,
+    propertylayer_portrayal: dict | None = None,
+    post_process: None = None,
+    **space_drawing_kwargs,
+):
+    """Create a Matplotlib-based space visualization component.
+
+    Args:
+        agent_portrayal: Function to portray agents.
+        propertylayer_portrayal: Dictionary of PropertyLayer portrayal specifications
+        post_process : a callable that will be called with the Axes instance. Allows for fine tuning plots (e.g., control ticks)
+        space_drawing_kwargs : additional keyword arguments to be passed on to the underlying space drawer function. See
+                               the functions for drawing the various spaces for further details.
+
+    ``agent_portrayal`` is called with an agent and should return a dict. Valid fields in this dict are "color",
+    "size", "marker", "zorder", alpha, linewidths, and edgecolors. Other field are ignored and will result in a user warning.
+
+    Returns:
+        function: A function that creates a SpaceMatplotlib component
+    """
+    if agent_portrayal is None:
+
+        def agent_portrayal(a):
+            return {}
+
+    def MakeSpaceMatplotlib(model):
+        return SpaceMatplotlib(
+            model,
+            agent_portrayal,
+            propertylayer_portrayal,
+            post_process=post_process,
+            **space_drawing_kwargs,
+        )
+
+    return MakeSpaceMatplotlib
+
+@solara.component
+def SpaceMatplotlib(
+    model,
+    agent_portrayal,
+    propertylayer_portrayal,
+    dependencies: list[any] | None = None,
+    post_process: None = None,
+    **space_drawing_kwargs,
+):
+    """Create a Matplotlib-based space visualization component."""
+    update_counter.get()
+
+    space = getattr(model, "grid", None)
+    if space is None:
+        space = getattr(model, "space", None)
+
+    fig = plt.Figure()
+    ax = fig.add_subplot()
+
+    ax.imshow(
+        X=model.power.data,
+        cmap='inferno',
+        alpha=1,
+    )
+    
+    draw_space(
+        space,
+        agent_portrayal,
+        propertylayer_portrayal=propertylayer_portrayal,
+        ax=ax,
+        **space_drawing_kwargs,
+    )
+
+    if post_process is not None:
+        post_process(ax)
+
+    solara.FigureMatplotlib(
+        fig, format="png", bbox_inches="tight", dependencies=dependencies
+    )
+
 
 
 def wec_draw(agent):
@@ -20,9 +121,13 @@ def wec_draw(agent):
     # using cached markers to speed things up
     if neighbors <= 1:
         return {"color": "red", "size": 20}
-    elif neighbors >= 2:
+    if agent.battery < 10:
+        return {"color": "black", "size": 20}
+    elif agent.WEC_power >= 0:
         return {"color": "green", "size": 20}
-
+    elif agent.WEC_power < 0:
+        return {"color": "yellow", "size": 20}
+    
 
 model_params = {
     "seed": {
@@ -33,31 +138,60 @@ model_params = {
     "population_size": Slider(
         label="Number of WECs",
         value=100,
-        min=10,
-        max=1000,
-        step=10,
+        min=1,
+        max=100,
+        step=1,
     ),
-    "width": 100,
-    "height": 100,
+    "width": {
+        "type": "InputText",
+        "value": 100,
+        "label": "width",
+    },
+    "height": {
+        "type": "InputText",
+        "value": 100,
+        "label": "height",
+    },
     "speed": Slider(
         label="Max speed of WEC",
-        value=5,
-        min=1,
-        max=20,
-        step=1,
+        value=1,
+        min=0,
+        max=2,
+        step=0.01,
     ),
     "vision": Slider(
         label="Vision (radius)",
-        value=10,
+        value=30,
         min=1,
-        max=50,
+        max=100,
         step=1,
     ),
     "separation": Slider(
         label="Minimum Separation",
-        value=2,
+        value=5,
         min=1,
-        max=5000,
+        max=30,
+        step=1,
+    ),
+    "efficiency": Slider(
+        label="Conversion efficiency",
+        value=0.5,
+        min=0,
+        max=1,
+        step=0.01,
+    ),
+    "consume": Slider(
+        label="Consume of energy to move",
+        value=0.5,
+        min=0,
+        max=2,
+        step=0.01,
+    ),
+    "battery": Slider(
+        label="Starting amount of energy",
+        value=30,
+        min=0,
+        max=100,
         step=1,
     ),
 }
@@ -66,7 +200,9 @@ model = WECswarm()
 
 page = SolaraViz(
     model,
-    components=[make_space_component(agent_portrayal=wec_draw, backend="matplotlib")],
+    components=[make_space_component(agent_portrayal=wec_draw, backend="matplotlib"),
+                make_plot_component(measure="avg_battery"),
+                make_plot_component(measure="connections")],
     model_params=model_params,
     name="WEC Swarm Model",
 )

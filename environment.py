@@ -1,24 +1,41 @@
 import numpy as np
+from scipy.ndimage import gaussian_filter
+from matplotlib import pyplot as plt
 
-from model import WECswarm
+from mesa.space import PropertyLayer
 
 
-class Ocean:
-    def __init__(self, width=100, height=100, power:int = 1):
+
+
+class Ocean(PropertyLayer):
+    def __init__(self, width: int = 100, height: int = 100, max_power:int = 1):
+        super().__init__(name="Ocean", width=width, height=height, default_value=1)
         self.width = width
         self.height = height
-        self.max_power = power
-        self.data = np.ones((self.width, self.height))*self.max_power
-        self.data[(1, 1)] = 0
-        self.data[(0, 1)] = 3
+        self.max_power = max_power
+        # self.power = self.create_env()
+
+
+    def modify_ocean(self):
+        rand_power = np.random.rand(self.width, self.height)
+        power_distribution = gaussian_filter(rand_power, sigma=15)  # più sigma = più liscio
+        norm = np.dot(np.divide(power_distribution - np.min(power_distribution), np.max(power_distribution) - np.min(power_distribution)), self.max_power)
+
+        self.set_cells(value=norm)
+        return 
 
     def bilinear_interpolation(self, pos):
         """
         Interpolazione bilineare del campo 2D 'field' alla posizione continua (x, y).
         Ritorna un valore float compreso tra 0 e 1.
         """
-        x = pos[0]
-        y = pos[1]
+        x = pos[1]
+        y = pos[0]
+        if x > self.width - 1:
+            x -= 1
+        if y > self.height - 1:
+            y -= 1
+
         x0 = int(np.floor(x))
         x1 = x0 + 1
 
@@ -46,10 +63,21 @@ class Ocean:
 
     def get_power(self, pos):
         power = self.bilinear_interpolation(pos=pos)
-        print(power)
         return power
+    
 
+    def test_plot(self):
+        plt.imshow(self.data, cmap='viridis')
+        plt.colorbar()
+        plt.show()
+        return
+    
+    def plot(self, ax):
+        ax.imshow(self.data, cmap='viridis')
+        ax.colorbar()
 
+o = Ocean(width=100, height=100, max_power=1)
 
-
-Ocean.get_power(pos=(0.5, 0.5))
+v = np.array([81.69877989, 65.99306323])
+print(v)
+print(o.bilinear_interpolation(pos=v))
