@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath("../../../.."))
 
 import numpy as np
 
-from mesa import Model
+from mesa import Model, DataCollector
 from agents import WEC
 from mesa.experimental.continuous_space import ContinuousSpace
 
@@ -30,9 +30,10 @@ class WECswarm(Model):
         height=100,
         speed=1,
         vision=10,
-        separation=20,
-        separate=0.015,
+        separation=5,
         efficiency=0.3,
+        consume=1,
+        battery=50,
         seed=None,
     ):
         """Create a new Boids Flocking model.
@@ -65,6 +66,11 @@ class WECswarm(Model):
         self.power = Ocean(width=width, height=height, max_power = 1)
         self.power.modify_ocean()
 
+        
+        #{"connections": lambda m: sum(len(a.neighbors) for a in m.agents),}
+        #print(self.datacollector.agent_reporters)
+        #agent_reporters={"battery": lambda a: a.battery},
+
         # Create and place the Boid agents
         positions = self.rng.random(size=(population_size, 2)) * self.space.size
         directions = self.rng.uniform(-1, 1, size=(population_size, 2))
@@ -76,15 +82,31 @@ class WECswarm(Model):
             max_speed=speed,
             speed = 0,
             direction=directions,
-            separate=separate,
-            vision=vision,
             separation=separation,
+            vision=vision,
+            consume=consume,
             efficiency=efficiency,
+            battery=battery,
         )
+
+        model_reporter = {
+            "avg_battery": lambda m: np.mean([a.battery for a in m.agents]),
+            "connections": lambda m: np.sum([len(a.neighbors) for a in m.agents])
+        }
+
+        agent_reporter = {
+            "battery": lambda a: a.battery,
+            "WEC_power": lambda a: a.WEC_power
+        }
+
+
+        self.datacollector = DataCollector(model_reporters=model_reporter, agent_reporters=agent_reporter)
 
         # For tracking statistics
         self.average_heading = None
         self.update_average_heading()
+        #self.datacollector.collect(self)
+
 
     # vectorizing the calculation of angles for all agents
     def calculate_angles(self):
@@ -106,9 +128,9 @@ class WECswarm(Model):
 
     def step(self):
         """Run one step of the model.
-
         All agents are activated in random order using the AgentSet shuffle_do method.
         """
         self.agents.shuffle_do("step")
         self.update_average_heading()
         self.calculate_angles()
+        self.datacollector.collect(self)

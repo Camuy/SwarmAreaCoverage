@@ -7,6 +7,7 @@ of flocking behavior.
 import numpy as np
 
 from mesa.experimental.continuous_space import ContinuousSpaceAgent
+from mesa import DataCollector
 
 class WEC(ContinuousSpaceAgent):
     """A Boid-style flocker agent.
@@ -32,9 +33,6 @@ class WEC(ContinuousSpaceAgent):
         direction=(1, 1),
         vision=1,
         separation=1,
-        cohere=0.03,
-        separate=0.015,
-        match=0.05,
         power: float = 0,
         battery: int = 50,
         consume: int = 1,
@@ -80,7 +78,6 @@ class WEC(ContinuousSpaceAgent):
         
         self.neighbors = [n for n in self.neighbors if n is not self]
         
-        
         # If no neighbors, maintain current direction
         if not self.neighbors:
             self.move()
@@ -94,26 +91,19 @@ class WEC(ContinuousSpaceAgent):
         self.move()
     
     def get_direction(self):
-        targets = self.get_target() # highest power function, i go where the power is higher
-        
-        delta = self.space.calculate_difference_vector(self.position, agents=targets)
-        delta = delta[0] + self.agoraphobic()
-        #cohere_vector = delta.sum(axis=0) * self.cohere_factor
-        #separation_vector = (-1 * delta[distances < self.separation].sum(axis=0) * self.separate_factor)
-        #match_vector = (np.asarray([n.direction for n in neighbors]).sum(axis=0) * self.match_factor)
-
-        # Normalize direction vector
-        norm = np.linalg.norm(delta)
-
-        if norm > self.separation:
+        crowd = self.crowd()
+        if len(crowd) == 0 or self.battery < 10:
+            targets = self.get_target() # highest power function, i go where the power is higher
+            delta = self.space.calculate_difference_vector(self.position, agents=targets)
+            delta = delta[0]
+            # Normalize direction vector
+            norm = np.linalg.norm(delta)
             self.direction = np.divide(delta, norm)
-        if norm < self.separation:
-            self.agoraphobic()
-        if targets[0] == self:
+        elif len(crowd) > 0 or self.battery > 80:
+            self.agoraphobic(crowd=crowd)
+        else:
             self.direction = [0, 0]
-            
-        
-        print("direction =", self.direction)
+        #print("direction =", self.direction)
         return
     
     def get_target(self):
@@ -123,13 +113,16 @@ class WEC(ContinuousSpaceAgent):
                 target = n
         return [target]
     
-    def agoraphobic(self):
-        crawd = []
+    def crowd(self):
+        crowd = []
         for n in self.neighbors:
             distance = self.space.calculate_distances(point=self.position, agents=[n])
             if distance[0] < self.separation:
-                crawd.append(n)
-        delta = self.space.calculate_difference_vector(self.position, agents=crawd)
+                crowd.append(n)
+        return crowd
+    
+    def agoraphobic(self, crowd):
+        delta = self.space.calculate_difference_vector(self.position, agents=crowd)
         delta = delta[0]
         norm = np.linalg.norm(delta)
         self.direction = -np.divide(delta, norm)
@@ -139,7 +132,12 @@ class WEC(ContinuousSpaceAgent):
         return np.multiply(self.efficiency, self.model.power.get_power(self.position))
     
     def get_speed(self):
-        self.speed = np.multiply(np.divide(self.battery, 100), self.max_speed) # linear function, can be sigmoid or others
+        #self.speed = np.multiply(np.divide(self.battery, 100), self.max_speed)
+        #self.speed = np.multiply(1 - np.divide(self.battery, 100), self.max_speed) # linear function, can be sigmoid or others
+        #self.speed = self.max_speed * (1 - np.log(self.battery + 1) / np.log(101))
+        self.speed = self.max_speed * (1 - ((60 - self.battery) ** 2)/3600) #quadratica normalizzata
+        if self.battery < 5:
+            self.speed = 0
         return
     
     def get_consume(self):
@@ -150,6 +148,8 @@ class WEC(ContinuousSpaceAgent):
         self.battery += self.get_recharge() - self.get_consume()
         if self.battery > 100:
             self.battery = 100
+        if self.battery < 0:
+            self.battery = 0
         return
 
     def move(self):
