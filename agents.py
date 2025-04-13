@@ -34,7 +34,7 @@ class WEC(ContinuousSpaceAgent):
         vision=1,
         separation=1,
         power: float = 0,
-        battery: int = 50,
+        battery: float = 50,
         consume: int = 1,
         efficiency: float = 0.3,
         WEC_power = 0
@@ -144,7 +144,7 @@ class WEC(ContinuousSpaceAgent):
         return (self.speed ** 3) * self.consume
     
     def get_battery(self):
-        self.WEC_power = self.get_recharge() - self.get_consume()
+        self.WEC_power = self.get_recharge() - self.get_consume() - 0.1
         self.battery += self.get_recharge() - self.get_consume()
         if self.battery > 100:
             self.battery = 100

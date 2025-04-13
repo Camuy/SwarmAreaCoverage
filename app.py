@@ -121,12 +121,18 @@ def wec_draw(agent):
     # using cached markers to speed things up
     if neighbors <= 1:
         return {"color": "red", "size": 20}
-    if agent.battery < 10:
-        return {"color": "black", "size": 20}
-    elif agent.WEC_power >= 0:
-        return {"color": "green", "size": 20}
-    elif agent.WEC_power < 0:
-        return {"color": "yellow", "size": 20}
+    if neighbors > 2:
+        if agent.battery > 20 and agent.battery < 90:
+            if agent.WEC_power >= 0:
+                return {"color": "green", "size": 20}
+            else:
+                return {"color": "yellow", "size": 20}
+        elif agent.battery < 20:
+            if agent.battery < 10:
+                return {"color": "black", "size": 20}
+            return {"color": "grey", "size": 20}
+        elif agent.battery > 90:
+            return {"color": "blue", "size": 20}
     
 
 model_params = {
@@ -135,13 +141,6 @@ model_params = {
         "value": 42,
         "label": "Random Seed",
     },
-    "population_size": Slider(
-        label="Number of WECs",
-        value=100,
-        min=1,
-        max=100,
-        step=1,
-    ),
     "width": {
         "type": "InputText",
         "value": 100,
@@ -152,6 +151,13 @@ model_params = {
         "value": 100,
         "label": "height",
     },
+    "population_size": Slider(
+        label="Number of WECs",
+        value=100,
+        min=1,
+        max=100,
+        step=1,
+    ),
     "speed": Slider(
         label="Max speed of WEC",
         value=1,
@@ -161,7 +167,7 @@ model_params = {
     ),
     "vision": Slider(
         label="Vision (radius)",
-        value=30,
+        value=15,
         min=1,
         max=100,
         step=1,
@@ -175,14 +181,14 @@ model_params = {
     ),
     "efficiency": Slider(
         label="Conversion efficiency",
-        value=0.5,
+        value=0.20,
         min=0,
         max=1,
         step=0.01,
     ),
     "consume": Slider(
         label="Consume of energy to move",
-        value=0.5,
+        value=1,
         min=0,
         max=2,
         step=0.01,
