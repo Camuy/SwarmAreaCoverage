@@ -121,12 +121,19 @@ def wec_draw(agent):
     # using cached markers to speed things up
     if neighbors <= 1:
         return {"color": "red", "size": 20}
-    if agent.battery < 10:
-        return {"color": "black", "size": 20}
-    elif agent.WEC_power >= 0:
-        return {"color": "green", "size": 20}
-    elif agent.WEC_power < 0:
-        return {"color": "yellow", "size": 20}
+    if neighbors > 1:
+        if agent.battery > 20:
+            if agent.battery > 90:
+                return {"color": "blue", "size": 20}
+            if agent.WEC_power >= 0:
+                return {"color": "green", "size": 20}
+            else:
+                return {"color": "yellow", "size": 20}
+        elif agent.battery < 20:
+            if agent.battery < 10:
+                return {"color": "black", "size": 20}
+            return {"color": "grey", "size": 20}
+        
     
 
 model_params = {
@@ -135,13 +142,6 @@ model_params = {
         "value": 42,
         "label": "Random Seed",
     },
-    "population_size": Slider(
-        label="Number of WECs",
-        value=100,
-        min=1,
-        max=100,
-        step=1,
-    ),
     "width": {
         "type": "InputText",
         "value": 100,
@@ -152,37 +152,51 @@ model_params = {
         "value": 100,
         "label": "height",
     },
+    "population_size": Slider(
+        label="Number of WECs",
+        value=100,
+        min=1,
+        max=100,
+        step=1,
+    ),
     "speed": Slider(
         label="Max speed of WEC",
-        value=1,
+        value=0.5,
         min=0,
-        max=2,
+        max=1,
         step=0.01,
     ),
     "vision": Slider(
         label="Vision (radius)",
-        value=30,
+        value=20,
         min=1,
         max=100,
         step=1,
     ),
     "separation": Slider(
         label="Minimum Separation",
-        value=5,
+        value=9,
         min=1,
         max=30,
         step=1,
     ),
     "efficiency": Slider(
         label="Conversion efficiency",
-        value=0.5,
+        value=0.70,
         min=0,
         max=1,
         step=0.01,
     ),
     "consume": Slider(
         label="Consume of energy to move",
-        value=0.5,
+        value=1,
+        min=0,
+        max=2,
+        step=0.01,
+    ),
+    "load": Slider(
+        label="Amount of work",
+        value=1,
         min=0,
         max=2,
         step=0.01,
@@ -202,7 +216,8 @@ page = SolaraViz(
     model,
     components=[make_space_component(agent_portrayal=wec_draw, backend="matplotlib"),
                 make_plot_component(measure="avg_battery"),
-                make_plot_component(measure="connections")],
+                make_plot_component(measure="connections"),
+                make_plot_component(measure="total_load")],
     model_params=model_params,
     name="WEC Swarm Model",
 )
