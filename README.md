@@ -23,7 +23,7 @@ Once you have installed all the dependencies, you can clone this repository and 
 
 to clone the repository you must have git installed.
 
-<pre><code class="language-bash">  pip install git
+<pre><code class="language-bash">  brew install git
   git clone https://github.com/Camuy/SwarmAreaCoverage.git
 </code></pre>
 
