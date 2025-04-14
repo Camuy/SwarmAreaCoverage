@@ -16,7 +16,7 @@ Mesa required all this library, if you install only Mesa you are not able to use
 This repository is basedo on python 3.12.9. It should work also with the version 3.11.0 and older.
 
 First of all you must upgrade all packages, and if you don't have pip you must install it.
-<pre><code class="language-bash">  pip install --upgrade pip
+<pre><code class="language-bash">  brew install --upgrade pip
 </code></pre>
 
 Once you have installed all the dependencies, you can clone this repository and perform the simulation.
