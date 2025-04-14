@@ -34,6 +34,7 @@ class WECswarm(Model):
         efficiency=0.3,
         consume=1,
         battery=50,
+        load = 0,
         seed=None,
     ):
         """Create a new Boids Flocking model.
@@ -87,11 +88,13 @@ class WECswarm(Model):
             consume=consume,
             efficiency=efficiency,
             battery=battery,
+            load = load,
         )
 
         model_reporter = {
             "avg_battery": lambda m: np.mean([a.battery for a in m.agents]),
-            "connections": lambda m: np.sum([len(a.neighbors) for a in m.agents])
+            "connections": lambda m: np.sum([len(a.neighbors) for a in m.agents]),
+            "total_load": lambda m: np.multiply(np.divide(np.sum([a.load for a in m.agents]), population_size), 100)
         }
 
         agent_reporter = {
@@ -106,6 +109,7 @@ class WECswarm(Model):
         self.average_heading = None
         self.update_average_heading()
         #self.datacollector.collect(self)
+        self.count = 0
 
 
     # vectorizing the calculation of angles for all agents
@@ -134,3 +138,8 @@ class WECswarm(Model):
         self.update_average_heading()
         self.calculate_angles()
         self.datacollector.collect(self)
+        #self.count += 1
+        #if self.count == 300:
+        #    self.power.modify_ocean()
+        #    self.count = 0
+        self.power.update()

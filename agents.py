@@ -37,7 +37,8 @@ class WEC(ContinuousSpaceAgent):
         battery: float = 50,
         consume: int = 1,
         efficiency: float = 0.3,
-        WEC_power = 0
+        WEC_power = 0,
+        load = 0
         ):
         """Create a new Boid flocker agent.
 
@@ -58,6 +59,7 @@ class WEC(ContinuousSpaceAgent):
         self.direction = direction
         self.vision = vision ## radius of comunication
         self.separation = separation
+        self.min_separation  = separation
         self.neighbors = []
         self.angle = 0.0  # represents the angle at which the boid is moving
         self.power = self.model.power.get_power(self.position)
@@ -65,12 +67,16 @@ class WEC(ContinuousSpaceAgent):
         self.consume = consume ## rate of usage of the battery to move
         self.efficiency = efficiency
         self.WEC_power = WEC_power
+        self.load = load
 
     def update_status(self):
         self.neighbors, _ = self.get_neighbors_in_radius(radius=self.vision)
         self.get_speed()
         self.model.power.get_power(self.position)
         self.get_battery()
+        self.get_separation()
+
+
 
     def step(self):
         # get updates
@@ -99,7 +105,7 @@ class WEC(ContinuousSpaceAgent):
             # Normalize direction vector
             norm = np.linalg.norm(delta)
             self.direction = np.divide(delta, norm)
-        elif len(crowd) > 0 or self.battery > 80:
+        elif len(crowd) > 0:
             self.agoraphobic(crowd=crowd)
         else:
             self.direction = [0, 0]
@@ -141,17 +147,41 @@ class WEC(ContinuousSpaceAgent):
         return
     
     def get_consume(self):
-        return (self.speed ** 3) * self.consume
+        if self.battery > 80:
+            self.load = 0.6
+        elif self.battery < 20:
+            self.load = 0.1
+            if self.battery < 5:
+                self.load = 0.05
+        else:
+            self.load = 0.2 + np.pow((np.divide(self.battery, 100)-0.2), 2)
+
+        if self.load < 0:
+            self.load = 0
+        
+        return (self.speed ** 3) * self.consume + self.load
     
     def get_battery(self):
-        self.WEC_power = self.get_recharge() - self.get_consume() - 0.1
+        self.WEC_power = self.get_recharge() - self.get_consume()
         self.battery += self.get_recharge() - self.get_consume()
         if self.battery > 100:
             self.battery = 100
         if self.battery < 0:
             self.battery = 0
         return
-
+    
+    def get_separation(self):
+        self.separation += np.multiply(1 - np.divide(self.battery + 40, 100), 2)
+        if self.separation < self.min_separation:
+            self.separation = self.min_separation
+        if self.battery < 20:
+            if self.separation > np.multiply(self.min_separation - 1, 3):
+                self.separation = np.multiply(self.min_separation - 1, 3)
+        else:
+            if self.separation > np.multiply(self.min_separation, 2) - 1:
+                self.separation  = np.multiply(self.min_separation, 2) - 1
+        return
+    
     def move(self):
         position = self.position + self.direction * self.speed
         if position[0] < self.space.x_min:
