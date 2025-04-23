@@ -18,6 +18,7 @@ class Ocean(PropertyLayer):
 
 
     def modify_ocean(self):
+        np.random.seed(10)   #same initial ocean for both environment
         rand_power = np.random.rand(self.width, self.height)
         power_distribution = gaussian_filter(rand_power, sigma=self.sigma)  # più sigma = più liscio
         norm = np.dot(np.divide(power_distribution - np.min(power_distribution), np.max(power_distribution) - np.min(power_distribution)), self.max_power)
@@ -68,12 +69,15 @@ class Ocean(PropertyLayer):
     
     def update(self):
         # Crea una perturbazione casuale
+        i=1
+        np.random.seed(i)
         perturbation = np.random.randn(self.width, self.height) * 0.15   
+        i+=1   #changing the random number during the time
         # Applica la perturbazione alla distribuzione attuale
         power_distribution = self.data + gaussian_filter(perturbation, sigma=self.sigma)
         # Ritaglia ai limiti di [0, self.max_power] per evitare overflow
         norm = np.dot(np.divide(power_distribution - np.min(power_distribution), np.max(power_distribution) - np.min(power_distribution)), self.max_power)
-
+     
     
         self.set_cells(value=norm)
         return

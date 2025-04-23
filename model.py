@@ -12,9 +12,10 @@ sys.path.insert(0, os.path.abspath("../../../.."))
 
 
 import numpy as np
+from numpy.random import default_rng
 
 from mesa import Model, DataCollector
-from agents import WEC
+from agents import WEC,STATIC
 from mesa.experimental.continuous_space import ContinuousSpace
 
 from environment import Ocean
@@ -35,7 +36,7 @@ class WECswarm(Model):
         consume=1,
         battery=50,
         load = 0,
-        seed=None,
+        seed=10,
     ):
         """Create a new Boids Flocking model.
 
@@ -51,6 +52,7 @@ class WECswarm(Model):
             match: Weight of alignment behavior (default: 0.05)
             seed: Random seed for reproducibility (default: None)
         """
+        self.rng = default_rng(seed)                #To make the initial positioning of the agents in the Static and Dynamic environment simillar we add this
         super().__init__(seed=seed)
         self.agent_angles = np.zeros(
             population_size
@@ -138,6 +140,100 @@ class WECswarm(Model):
         self.update_average_heading()
         self.calculate_angles()
         self.datacollector.collect(self)
+        #self.count += 1
+        #if self.count == 300:
+        #    self.power.modify_ocean()
+        #    self.count = 0
+        self.power.update()
+
+
+
+
+class WECSTATIC(Model):
+    """Flocker model class. Handles agent creation, placement and scheduling."""
+
+    def __init__(
+        self,
+        population_size=100,
+        width=100,
+        height=100,
+        efficiency=0.3,
+        battery=50,
+        load = 0,
+        seed=10,
+    ):
+        """Create a new Boids Flocking model.
+
+        Args:
+            population_size: Number of Boids in the simulation (default: 100)
+            width: Width of the space (default: 100)
+            height: Height of the space (default: 100)
+            speed: How fast the Boids move (default: 1)
+            vision: How far each Boid can see (default: 10)
+            separation: Minimum distance between Boids (default: 2)
+            cohere: Weight of cohesion behavior (default: 0.03)
+            separate: Weight of separation behavior (default: 0.015)
+            match: Weight of alignment behavior (default: 0.05)
+            seed: Random seed for reproducibility (default: None)
+        """
+        self.rng = default_rng(seed)            #To make the initial positioning of the agents in the Static and Dynamic environment similar, we add this
+        super().__init__(seed=seed)
+        self.cumulative_load = 0.0
+        self.agent_angles = np.zeros(
+            population_size
+        )  # holds the angle representing the direction of all agents at a given step
+
+        # Set up the space
+        self.space = ContinuousSpace(
+            [[0, width], [0, height]],
+            torus=False,
+            random=self.random,
+            n_agents=population_size,
+        )
+
+        self.power = Ocean(width=width, height=height, max_power = 1)
+        self.power.modify_ocean()
+
+        
+        #{"connections": lambda m: sum(len(a.neighbors) for a in m.agents),}
+        #print(self.datacollector.agent_reporters)
+        #agent_reporters={"battery": lambda a: a.battery},
+
+        # Create and place the Boid agents
+        positions = self.rng.random(size=(population_size, 2)) * self.space.size
+        STATIC.create_agents(
+            self,
+            population_size,
+            self.space,
+            position=positions,
+            efficiency=efficiency,
+            battery=battery,
+            load = load,
+        )
+
+        model_reporter = {
+            "avg_battery": lambda m: np.mean([a.battery for a in m.agents]),
+            "load_per_step":  lambda m: sum(a.load for a in m.agents),
+            "total_load":    lambda m: m.cumulative_load 
+        }
+
+        agent_reporter = {
+            "battery": lambda a: a.battery,
+            "WEC_power": lambda a: a.WEC_power
+        }
+
+
+        self.datacollector = DataCollector(model_reporters=model_reporter, agent_reporters=agent_reporter)
+
+
+
+    def step(self):
+        """Run one step of the model.
+        All agents are activated in random order using the AgentSet shuffle_do method.
+        """
+        self.agents.shuffle_do("step")
+        self.datacollector.collect(self)
+        self.cumulative_load += sum(a.load for a in self.agents)
         #self.count += 1
         #if self.count == 300:
         #    self.power.modify_ocean()

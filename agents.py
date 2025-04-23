@@ -198,3 +198,52 @@ class WEC(ContinuousSpaceAgent):
             position[1] = self.position[1] + self.direction[1] * self.speed
         self.position = position
         return
+
+
+class STATIC(ContinuousSpaceAgent):
+
+    def __init__(
+        self,
+        model,
+        space,
+        position=(0, 0),
+        power: float = 0,
+        battery: float = 50,
+        efficiency: float = 0.3,
+        WEC_power = 0,
+        load = 0
+        ):
+        """Create a new Boid flocker agent.
+
+        Args:
+            model: Model instance the agent belongs to
+            speed: Distance to move per step
+            direction: numpy vector for the Boid's direction of movement
+            vision: Radius to look around for nearby Boids
+            separation: Minimum distance to maintain from other Boids
+            cohere: Relative importance of matching neighbors' positions (default: 0.03)
+            separate: Relative importance of avoiding close neighbors (default: 0.015)
+            match: Relative importance of matching neighbors' directions (default: 0.05)
+        """
+        super().__init__(space, model)
+        self.position = position
+        self.power = self.model.power.get_power(self.position)
+        self.battery = battery
+        self.efficiency = efficiency
+        self.WEC_power = WEC_power
+        self.load = load
+        self.neighbors = []
+        self.angle = 0.0 
+
+    def update_status(self):
+        self.model.power.get_power(self.position)
+        self.load_calculation()
+       
+    def load_calculation(self):
+        self.load = np.multiply(self.efficiency, self.model.power.get_power(self.position))
+        return 
+
+
+    def step(self):
+        # get updates
+        self.update_status()
