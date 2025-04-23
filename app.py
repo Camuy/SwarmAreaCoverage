@@ -133,8 +133,8 @@ def wec_draw(agent):
             if agent.battery < 10:
                 return {"color": "black", "size": 20}
             return {"color": "grey", "size": 20}
-        
-    
+
+
 
 model_params = {
     "seed": {
