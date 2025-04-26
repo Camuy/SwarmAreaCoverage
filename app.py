@@ -229,6 +229,7 @@ comps_static = [
 @solara.component
 def DynamicPage():
     #model = solara.reactive(WECswarm())         #if we want to simulation doesn't intrupt when we switch to the other page
+    color=0;
     model = WECswarm()
     return SolaraViz(
         model,
@@ -240,6 +241,7 @@ def DynamicPage():
 @solara.component
 def StaticPage():
     #model = solara.reactive(WECSTATIC())                 #if we want to simulation doesn't intrupt when we switch to the other page
+    
     model = WECSTATIC()
     return SolaraViz(
         model,

@@ -241,7 +241,8 @@ class STATIC(ContinuousSpaceAgent):
        
     def load_calculation(self):
         self.load = np.multiply(self.efficiency, self.model.power.get_power(self.position))
-        return 
+
+        return self.load
 
 
     def step(self):
