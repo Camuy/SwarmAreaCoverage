@@ -119,8 +119,7 @@ def wec_draw(agent):
     rounded_deg = round(deg / 10) * 10 % 360
 
     # using cached markers to speed things up
-    if neighbors <= 1:
-        return {"color": "red", "size": 20}
+    
     if neighbors > 1:
         if agent.battery > 20:
             if agent.battery > 90:
@@ -133,6 +132,8 @@ def wec_draw(agent):
             if agent.battery < 10:
                 return {"color": "black", "size": 20}
             return {"color": "grey", "size": 20}
+    else:
+        return {"color": "red", "size": 20}
         
     
 
@@ -217,12 +218,15 @@ comps_dynamic = [
     make_plot_component(measure="avg_battery"),
     make_plot_component(measure="connections"),
     make_plot_component(measure="total_load"),
+    make_plot_component(measure="cumulative_load"),
 ]
 
 comps_static = [
     make_space_component(agent_portrayal=wec_draw, backend="matplotlib"),
     make_plot_component(measure="avg_battery"),
+    make_plot_component(measure="connections"),
     make_plot_component(measure="total_load"),
+    make_plot_component(measure="cumulative_load"),
 ]
 
 # ─── two little wrapper components ────────────────────────────────────────

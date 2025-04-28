@@ -58,6 +58,8 @@ class WECswarm(Model):
             population_size
         )  # holds the angle representing the direction of all agents at a given step
 
+        self.cumulative_load = 0.0
+
         # Set up the space
         self.space = ContinuousSpace(
             [[0, width], [0, height]],
@@ -96,7 +98,8 @@ class WECswarm(Model):
         model_reporter = {
             "avg_battery": lambda m: np.mean([a.battery for a in m.agents]),
             "connections": lambda m: np.sum([len(a.neighbors) for a in m.agents]),
-            "total_load": lambda m: np.multiply(np.divide(np.sum([a.load for a in m.agents]), population_size), 100)
+            "total_load": lambda m: np.multiply(np.divide(np.sum([a.load for a in m.agents]), population_size), 100),
+            "cumulative_load": lambda m: m.cumulative_load 
         }
 
         agent_reporter = {
@@ -137,15 +140,14 @@ class WECswarm(Model):
         All agents are activated in random order using the AgentSet shuffle_do method.
         """
         self.agents.shuffle_do("step")
-        self.update_average_heading()
-        self.calculate_angles()
+        self.cumulative_load += sum(a.load for a in self.agents)
+
         self.datacollector.collect(self)
         #self.count += 1
         #if self.count == 300:
         #    self.power.modify_ocean()
         #    self.count = 0
         self.power.update()
-
 
 
 
@@ -157,7 +159,11 @@ class WECSTATIC(Model):
         population_size=100,
         width=100,
         height=100,
+        speed=1,
+        vision=10,
+        separation=5,
         efficiency=0.3,
+        consume=1,
         battery=50,
         load = 0,
         seed=10,
@@ -206,6 +212,11 @@ class WECSTATIC(Model):
             population_size,
             self.space,
             position=positions,
+            max_speed=speed,
+            speed = 0,
+            separation=separation,
+            vision=vision,
+            consume=consume,
             efficiency=efficiency,
             battery=battery,
             load = load,
@@ -213,8 +224,9 @@ class WECSTATIC(Model):
 
         model_reporter = {
             "avg_battery": lambda m: np.mean([a.battery for a in m.agents]),
-            "load_per_step":  lambda m: sum(a.load for a in m.agents),
-            "total_load":    lambda m: m.cumulative_load 
+            "connections": lambda m: np.sum([len(a.neighbors) for a in m.agents]),
+            "total_load": lambda m: np.multiply(np.divide(np.sum([a.load for a in m.agents]), population_size), 100),
+            "cumulative_load": lambda m: m.cumulative_load 
         }
 
         agent_reporter = {
