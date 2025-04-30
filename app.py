@@ -120,6 +120,8 @@ def wec_draw(agent):
 
     # using cached markers to speed things up
     
+    if neighbors <= 1:
+        return {"color": "red", "size": 20}
     if neighbors > 1:
         if agent.battery > 20:
             if agent.battery > 90:
@@ -132,8 +134,6 @@ def wec_draw(agent):
             if agent.battery < 10:
                 return {"color": "black", "size": 20}
             return {"color": "grey", "size": 20}
-    else:
-        return {"color": "red", "size": 20}
         
     
 
