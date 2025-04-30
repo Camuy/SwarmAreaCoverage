@@ -138,11 +138,13 @@ def wec_draw(agent):
     
 
 model_params = {
-    "seed": {
-        "type": "InputText",
-        "value": 42,
-        "label": "Random Seed",
-    },
+    "seed": Slider(
+        label="Random Seed",
+        value=42,
+        min=0,
+        max=100,
+        step=1,
+    ),
     "width": {
         "type": "InputText",
         "value": 100,

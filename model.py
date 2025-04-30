@@ -52,11 +52,8 @@ class WECswarm(Model):
             match: Weight of alignment behavior (default: 0.05)
             seed: Random seed for reproducibility (default: None)
         """
-        self.rng = default_rng(seed)                #To make the initial positioning of the agents in the Static and Dynamic environment simillar we add this
         super().__init__(seed=seed)
-        self.agent_angles = np.zeros(
-            population_size
-        )  # holds the angle representing the direction of all agents at a given step
+        self.rng = default_rng(seed=seed)                #To make the initial positioning of the agents in the Static and Dynamic environment simillar we add this
 
         self.cumulative_load = 0.0
 
@@ -68,7 +65,7 @@ class WECswarm(Model):
             n_agents=population_size,
         )
 
-        self.power = Ocean(width=width, height=height, max_power = 1)
+        self.power = Ocean(width=width, height=height, max_power = 1, seed=seed)
         self.power.modify_ocean()
 
         
@@ -182,13 +179,10 @@ class WECSTATIC(Model):
             match: Weight of alignment behavior (default: 0.05)
             seed: Random seed for reproducibility (default: None)
         """
+        super().__init__()
         self.rng = default_rng(seed)            #To make the initial positioning of the agents in the Static and Dynamic environment similar, we add this
-        super().__init__(seed=seed)
         self.cumulative_load = 0.0
-        self.agent_angles = np.zeros(
-            population_size
-        )  # holds the angle representing the direction of all agents at a given step
-
+        
         # Set up the space
         self.space = ContinuousSpace(
             [[0, width], [0, height]],
@@ -197,7 +191,7 @@ class WECSTATIC(Model):
             n_agents=population_size,
         )
 
-        self.power = Ocean(width=width, height=height, max_power = 1)
+        self.power = Ocean(width=width, height=height, max_power = 1, seed=seed)
         self.power.modify_ocean()
 
         
