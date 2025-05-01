@@ -1,10 +1,10 @@
 import os
 import sys
 import solara
-
+import solara.lab                           # NEW ─ tabs live here
 sys.path.insert(0, os.path.abspath("../../../.."))
 
-from model import WECswarm
+from model import WECswarm,WECSTATIC
 from mesa.visualization import Slider, SolaraViz, make_space_component, draw_space, make_plot_component
 from mesa.visualization.utils import update_counter
 from matplotlib import pyplot as plt
@@ -119,6 +119,7 @@ def wec_draw(agent):
     rounded_deg = round(deg / 10) * 10 % 360
 
     # using cached markers to speed things up
+    
     if neighbors <= 1:
         return {"color": "red", "size": 20}
     if neighbors > 1:
@@ -133,15 +134,17 @@ def wec_draw(agent):
             if agent.battery < 10:
                 return {"color": "black", "size": 20}
             return {"color": "grey", "size": 20}
-
-
+        
+    
 
 model_params = {
-    "seed": {
-        "type": "InputText",
-        "value": 42,
-        "label": "Random Seed",
-    },
+    "seed": Slider(
+        label="Random Seed",
+        value=42,
+        min=0,
+        max=100,
+        step=1,
+    ),
     "width": {
         "type": "InputText",
         "value": 100,
@@ -210,15 +213,51 @@ model_params = {
     ),
 }
 
-model = WECswarm()
 
-page = SolaraViz(
-    model,
-    components=[make_space_component(agent_portrayal=wec_draw, backend="matplotlib"),
-                make_plot_component(measure="avg_battery"),
-                make_plot_component(measure="connections"),
-                make_plot_component(measure="total_load")],
-    model_params=model_params,
-    name="WEC Swarm Model",
-)
-page  # noqa
+# reuse your component lists
+comps_dynamic = [
+    make_space_component(agent_portrayal=wec_draw, backend="matplotlib"),
+    make_plot_component(measure="avg_battery"),
+    make_plot_component(measure="connections"),
+    make_plot_component(measure="total_load"),
+    make_plot_component(measure="cumulative_load"),
+]
+
+comps_static = [
+    make_space_component(agent_portrayal=wec_draw, backend="matplotlib"),
+    make_plot_component(measure="avg_battery"),
+    make_plot_component(measure="connections"),
+    make_plot_component(measure="total_load"),
+    make_plot_component(measure="cumulative_load"),
+]
+
+# ─── two little wrapper components ────────────────────────────────────────
+@solara.component
+def DynamicPage():
+    #model = solara.reactive(WECswarm())         #if we want to simulation doesn't intrupt when we switch to the other page
+    color=0;
+    model = WECswarm()
+    return SolaraViz(
+        model,
+        components = comps_dynamic,
+        model_params=model_params,
+        name="Dynamic WECs",
+    )
+
+@solara.component
+def StaticPage():
+    #model = solara.reactive(WECSTATIC())                 #if we want to simulation doesn't intrupt when we switch to the other page
+    
+    model = WECSTATIC()
+    return SolaraViz(
+        model,
+        components = comps_static,
+        model_params=model_params,
+        name="Static WECs",
+    )
+
+# ─── tell Solara about our two routes ────────────────────────────────────
+routes = [
+    solara.Route(path="",       component=DynamicPage, label="Dynamic"),
+    solara.Route(path="static", component=StaticPage,  label="Static"),
+]

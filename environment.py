@@ -2,23 +2,26 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 from matplotlib import pyplot as plt
 
+from mesa import Model
 from mesa.space import PropertyLayer
 
 
 
 
 class Ocean(PropertyLayer):
-    def __init__(self, width: int = 100, height: int = 100, max_power:int = 1):
+    def __init__(self,  width: int = 100, height: int = 100, max_power:int = 1, seed: int = 42):
         super().__init__(name="Ocean", width=width, height=height, default_value=1)
         self.width = width
         self.height = height
         self.max_power = max_power
         # self.power = self.create_env()
         self.sigma = 15
-
+        self.index=1
+        self.seed = seed
 
     def modify_ocean(self):
-        rand_power = np.random.rand(self.width, self.height)
+        np.random.seed(self.seed)   #same initial ocean for both environment
+        rand_power = np.random.rand(self.width, self.height)        
         power_distribution = gaussian_filter(rand_power, sigma=self.sigma)  # più sigma = più liscio
         norm = np.dot(np.divide(power_distribution - np.min(power_distribution), np.max(power_distribution) - np.min(power_distribution)), self.max_power)
 
@@ -65,15 +68,19 @@ class Ocean(PropertyLayer):
     def get_power(self, pos):
         power = self.bilinear_interpolation(pos=pos)
         return power
-    
+ 
     def update(self):
-        # Crea una perturbazione casuale
+        # Crea una perturbazione casuale      
+        
+        np.random.seed(self.index)
         perturbation = np.random.randn(self.width, self.height) * 0.15   
+        self.index+=1   #changing the random number during the time
+    
         # Applica la perturbazione alla distribuzione attuale
         power_distribution = self.data + gaussian_filter(perturbation, sigma=self.sigma)
         # Ritaglia ai limiti di [0, self.max_power] per evitare overflow
         norm = np.dot(np.divide(power_distribution - np.min(power_distribution), np.max(power_distribution) - np.min(power_distribution)), self.max_power)
-
+     
     
         self.set_cells(value=norm)
         return
