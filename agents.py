@@ -198,3 +198,82 @@ class WEC(ContinuousSpaceAgent):
             position[1] = self.position[1] + self.direction[1] * self.speed
         self.position = position
         return
+
+
+class STATIC(ContinuousSpaceAgent):
+
+    def __init__(
+        self,
+        model,
+        space,
+        position=(0, 0),
+        max_speed=1,
+        speed = 0,
+        direction=(0, 0),
+        vision=1,
+        separation=1,
+        power: float = 0,
+        battery: float = 50,
+        consume: int = 1,
+        efficiency: float = 0.3,
+        WEC_power = 0,
+        load = 0
+        ):
+        """Create a new Boid flocker agent.
+
+        Args:
+            model: Model instance the agent belongs to
+            speed: Distance to move per step
+            direction: numpy vector for the Boid's direction of movement
+            vision: Radius to look around for nearby Boids
+            separation: Minimum distance to maintain from other Boids
+            cohere: Relative importance of matching neighbors' positions (default: 0.03)
+            separate: Relative importance of avoiding close neighbors (default: 0.015)
+            match: Relative importance of matching neighbors' directions (default: 0.05)
+        """
+        super().__init__(space, model)
+        self.position = position
+        self.max_speed = max_speed
+        self.speed = speed
+        self.direction = direction
+        self.vision = vision ## radius of comunication
+        self.separation = separation
+        self.min_separation  = separation
+        self.neighbors = []
+        self.angle = 0.0  # represents the angle at which the boid is moving
+        self.power = self.model.power.get_power(self.position)
+        self.battery = battery
+        self.consume = consume ## rate of usage of the battery to move
+        self.efficiency = efficiency
+        self.WEC_power = WEC_power
+        self.load = load
+
+    def update_status(self):
+        self.model.power.get_power(self.position)
+        self.load_calculation()
+        self.neighbors, _ = self.get_neighbors_in_radius(radius=self.vision)
+        self.get_battery()
+       
+    def load_calculation(self):
+        self.load = np.multiply(self.efficiency, self.model.power.get_power(self.position))
+        return self.load
+    
+    def get_battery(self):
+        self.WEC_power = self.get_recharge() - self.get_consume()
+        self.battery += self.get_recharge() - self.get_consume()
+        if self.battery > 100:
+            self.battery = 100
+        if self.battery < 0:
+            self.battery = 0
+        return
+    
+    def get_recharge(self):
+        return np.multiply(self.efficiency, self.model.power.get_power(self.position))
+    
+    def get_consume(self):
+        return np.multiply(self.efficiency, self.model.power.get_power(self.position))
+    
+    def step(self):
+        # get updates
+        self.update_status()
+        
