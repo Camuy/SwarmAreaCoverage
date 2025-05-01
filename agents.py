@@ -91,9 +91,9 @@ class WEC(ContinuousSpaceAgent):
             self.move()
             return
         
-        # self.neighbors = [n for n in self.neighbors if n.power > self.power] # filtered neigbors visible only if they have major pawer then me
+        #self.neighbors = [n for n in self.neighbors if n.power > self.power] # filtered neigbors visible only if they have major pawer then me
         
-        self.get_direction2()
+        self.get_direction()
         
         # Move boid
         self.move()
@@ -120,8 +120,6 @@ class WEC(ContinuousSpaceAgent):
             self.direction = dir(self, self.neighbors)
         elif len(crowd) > 0:
             self.agoraphobic(crowd=crowd)
-        else:
-            self.direction = [0, 0]
         return
     
     def get_target(self):
