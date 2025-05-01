@@ -273,8 +273,6 @@ class STATIC(ContinuousSpaceAgent):
     def get_consume(self):
         return np.multiply(self.efficiency, self.model.power.get_power(self.position))
     
-
-    
     def step(self):
         # get updates
         self.update_status()
