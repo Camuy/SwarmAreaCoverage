@@ -15,7 +15,7 @@ import numpy as np
 from numpy.random import default_rng
 
 from mesa import Model, DataCollector
-from agents import WEC,STATIC
+from agents import WEC, STATIC
 from mesa.experimental.continuous_space import ContinuousSpace
 
 from environment import Ocean
