@@ -1,0 +1,33 @@
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF
+import numpy as np
+from scipy.optimize import minimize
+
+
+# Dati: X = punti in R^2, y = valori funzione
+def get_neighbours_data(neighbours):
+    X = []
+    Y = []
+    for n in neighbours:
+        X.append(n.position)
+        Y.append(n.power)
+    return X, Y
+
+def GP_fit(X, Y):   
+    # GP fitting
+    kernel = RBF(length_scale=1.0)
+    gp = GaussianProcessRegressor(kernel=kernel)
+    gp.fit()
+    return gp
+
+def dir(n, res):
+    delta = res.x - n.position
+    norm = np.linalg.norm(delta)
+    return np.divide(delta, norm)
+
+def get_direction(n, neighbours):
+    X, Y = get_neighbours_data(neighbours=neighbours)
+    gp = GP_fit(X, Y)
+    res = minimize(-gp, x0=n.position, bounds=[(n.position - n.vision, n.position + n.vision), (n.position - n.vision, n.position + n.vision)])
+    dir = dir(n, res)
+    return dir

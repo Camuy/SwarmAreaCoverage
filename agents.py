@@ -9,6 +9,8 @@ import numpy as np
 from mesa.experimental.continuous_space import ContinuousSpaceAgent
 from mesa import DataCollector
 
+from direction import get_direction as dir
+
 class WEC(ContinuousSpaceAgent):
     """A Boid-style flocker agent.
 
@@ -72,7 +74,7 @@ class WEC(ContinuousSpaceAgent):
     def update_status(self):
         self.neighbors, _ = self.get_neighbors_in_radius(radius=self.vision)
         self.get_speed()
-        self.model.power.get_power(self.position)
+        self.power = self.model.power.get_power(self.position)
         self.get_battery()
         self.get_separation()
 
@@ -91,7 +93,7 @@ class WEC(ContinuousSpaceAgent):
         
         # self.neighbors = [n for n in self.neighbors if n.power > self.power] # filtered neigbors visible only if they have major pawer then me
         
-        self.get_direction()
+        self.get_direction2()
         
         # Move boid
         self.move()
@@ -110,6 +112,16 @@ class WEC(ContinuousSpaceAgent):
         else:
             self.direction = [0, 0]
         #print("direction =", self.direction)
+        return
+    
+    def get_direction2(self):
+        crowd = self.crowd()
+        if len(crowd) == 0 or self.battery < 10:
+            self.direction = dir(self, self.neighbors)
+        elif len(crowd) > 0:
+            self.agoraphobic(crowd=crowd)
+        else:
+            self.direction = [0, 0]
         return
     
     def get_target(self):
@@ -249,7 +261,7 @@ class STATIC(ContinuousSpaceAgent):
         self.load = load
 
     def update_status(self):
-        self.model.power.get_power(self.position)
+        self.power = self.model.power.get_power(self.position)
         self.load_calculation()
         self.neighbors, _ = self.get_neighbors_in_radius(radius=self.vision)
         self.get_battery()

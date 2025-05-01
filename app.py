@@ -4,7 +4,7 @@ import solara
 import solara.lab                           # NEW ─ tabs live here
 sys.path.insert(0, os.path.abspath("../../../.."))
 
-from model import WECswarm,WECSTATIC
+from model import WECswarm, WECSTATIC
 from mesa.visualization import Slider, SolaraViz, make_space_component, draw_space, make_plot_component
 from mesa.visualization.utils import update_counter
 from matplotlib import pyplot as plt
