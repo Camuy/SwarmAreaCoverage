@@ -294,3 +294,4 @@ class STATIC(ContinuousSpaceAgent):
         # get updates
         self.update_status()
         self.energy_hervesting()
+        
