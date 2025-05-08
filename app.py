@@ -214,6 +214,7 @@ model_params = {
 # component lists
 comps_dynamic = [
     make_space_component(agent_portrayal=wec_draw, backend="matplotlib"),
+   # make_plot_component(measure="count_agent_in_zone"),
     make_plot_component(measure="mean_energy_harvested"),
     make_plot_component(measure="net_energy_harvested"),
     make_plot_component(measure="total_energy_harvested"),

@@ -97,6 +97,7 @@ class WECswarm(Model):
             "mean_energy_harvested": lambda m: np.mean([a.energy_harvested for a in m.agents]),
             "net_energy_harvested": lambda m: np.mean([a.energy_harvested for a in m.agents]) - np.mean([a.consume for a in m.agents]),
             "total_energy_harvested": lambda m: np.sum([a.total_energy_harvested for a in m.agents]),
+         #   "count_agent_in_zone"= count_agent_in_zone ,
             "avg_battery": lambda m: np.mean([a.battery for a in m.agents]),
             "connections": lambda m: np.sum([len(a.neighbors) for a in m.agents]),
             "total_load": lambda m: np.multiply(np.divide(np.sum([a.load for a in m.agents]), population_size), 100)
@@ -106,6 +107,7 @@ class WECswarm(Model):
             "mean_energy_harvested": lambda a: a.energy_harvested,
             "net_energy_harvested": lambda a : a.energy_harvested,
             "total_energy_harvested": lambda a: a.total_energy_harvested,
+      #      "count_agent_in_zone": lambda a : a.count_agent_in_zone,
             "battery": lambda a: a.battery,
             "WEC_power": lambda a: a.WEC_power
         }

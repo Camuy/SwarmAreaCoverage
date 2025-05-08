@@ -45,6 +45,7 @@ class WEC(ContinuousSpaceAgent):
         step_number = 0,
         population_size = 100,
         total_energy_harvested = 0,
+        count_agent_in_zone = 0,
         ):
         """Create a new Boid flocker agent.
 
@@ -80,6 +81,7 @@ class WEC(ContinuousSpaceAgent):
         self.step_number = step_number
         self.total_energy_harvested = total_energy_harvested
         self.population_size = population_size
+        self.count_agent_in_zone = count_agent_in_zone
 
     def update_status(self):
         self.neighbors, _ = self.get_neighbors_in_radius(radius=self.vision)
@@ -94,8 +96,8 @@ class WEC(ContinuousSpaceAgent):
 
     def step(self):
         # get updates   
-        self.last_step_number = self.step_number
         self.step_number += 1
+        self.zone_counting()
         self.update_status() 
         self.energy_hervesting()    
         self.neighbors = [n for n in self.neighbors if n is not self]
@@ -190,7 +192,7 @@ class WEC(ContinuousSpaceAgent):
         return
   
     def get_separation(self):
-        print("separation at step ", self.step_number," = ", self.separation)
+        #print("separation at step ", self.step_number," = ", self.separation)
         self.separation += np.multiply(1 - np.divide(self.battery + 40, 100), 2)
         if self.separation < self.min_separation:
             self.separation = self.min_separation
@@ -204,7 +206,16 @@ class WEC(ContinuousSpaceAgent):
             print("separation is bigger than the vision of agent")
             self.separation = self.vision
         return
+    def zone_counting(self):
+         
+        if self.position[0] > 40 and self.position[0] < 60 and self.position[1] > 40 and self.position[1] <60:
+           # print( "position: ", self.position)
+            self.count_agent_in_zone += 1
+            print( "number of the agents in the zone: ", self.count_agent_in_zone)
+
         
+            
+    
     def energy_hervesting(self):
 
         self.energy_harvested = self.model.power.get_power(self.position)
@@ -212,10 +223,10 @@ class WEC(ContinuousSpaceAgent):
         self.total_energy_harvested += self.energy_harvested
         
    #     self.mean_energy_harvested = (lambda m: np.mean([a.energy_harvested for a in m.agents]))(self.model)
-        print("mean energy at step ",self.step_number," = ", self.energy_harvested)
+     #   print("mean energy at step ",self.step_number," = ", self.energy_harvested)
         
     #    self.total_energy_harvested = (lambda m: np.sum([a.energy_harvested for a in m.agents]))(self.model)
-        print("total energy at step ",self.step_number," = ", self.total_energy_harvested)
+    #    print("total energy at step ",self.step_number," = ", self.total_energy_harvested)
         
         
     def move(self):
@@ -294,4 +305,3 @@ class STATIC(ContinuousSpaceAgent):
         # get updates
         self.update_status()
         self.energy_hervesting()
-        
