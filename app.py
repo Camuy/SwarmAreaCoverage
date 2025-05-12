@@ -4,7 +4,7 @@ import solara
 import solara.lab                           # NEW ─ tabs live here
 sys.path.insert(0, os.path.abspath("../../../.."))
 
-from model import WECswarm,WECSTATIC
+from model import WECswarm, WECgp, WECSTATIC
 from mesa.visualization import Slider, SolaraViz, make_space_component, draw_space, make_plot_component
 from mesa.visualization.utils import update_counter
 from matplotlib import pyplot as plt
@@ -212,7 +212,7 @@ model_params = {
 
 
 # component lists
-comps_dynamic = [
+comps = [
     make_space_component(agent_portrayal=wec_draw, backend="matplotlib"),
    # make_plot_component(measure="count_agent_in_zone"),
     make_plot_component(measure="mean_energy_harvested"),
@@ -220,14 +220,6 @@ comps_dynamic = [
     make_plot_component(measure="total_energy_harvested"),
     make_plot_component(measure="avg_battery"),
     make_plot_component(measure="connections"),
-    make_plot_component(measure="total_load"),
-]
-
-comps_static = [
-    make_space_component(agent_portrayal=wec_draw, backend="matplotlib"),
-    make_plot_component(measure="energy_harvested"),
-    make_plot_component(measure="total_energy_harvested"),
-    make_plot_component(measure="avg_battery"),
     make_plot_component(measure="total_load"),
 ]
 
@@ -239,8 +231,20 @@ def DynamicPage():
     model = WECswarm()
     return SolaraViz(
         model,
-        components = comps_dynamic,
+        components = comps,
         model_params=model_params,
+        name="Dynamic WECs",
+    )
+
+@solara.component
+def GPPage():
+    #model = solara.reactive(WECswarm())         #if we want to simulation doesn't intrupt when we switch to the other page
+    color=0;
+    model = WECgp()
+    return SolaraViz(
+        model,
+        components = comps,
+        model_params = model_params,
         name="Dynamic WECs",
     )
 
@@ -251,13 +255,14 @@ def StaticPage():
     model = WECSTATIC()
     return SolaraViz(
         model,
-        components = comps_static,
-        model_params=model_params,
+        components = comps,
+        model_params = model_params,
         name="Static WECs",
     )
 
 # ─── tell Solara about our two routes ────────────────────────────────────
 routes = [
     solara.Route(path="",       component=DynamicPage, label="Dynamic"),
+    solara.Route(path="gp",       component=GPPage, label="Gaussian Process"),
     solara.Route(path="static", component=StaticPage,  label="Static"),
 ]
