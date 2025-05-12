@@ -29,8 +29,8 @@ to clone the repository you must have git installed.
 
 In a terminal you execute this commands to install all the dependency:
 <pre><code class="language-bash"> python -m venv venv
-source venv/bin/activate  # oppure l’equivalente su Windows
-pip install -r requirements.txt
+ source venv/bin/activate  # oppure l’equivalente su Windows
+ pip install -r requirements.txt
 
 </code></pre>
 
