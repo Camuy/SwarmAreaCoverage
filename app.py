@@ -119,7 +119,6 @@ def wec_draw(agent):
     rounded_deg = round(deg / 10) * 10 % 360
 
     # using cached markers to speed things up
-    
     if neighbors <= 1:
         return {"color": "red", "size": 20}
     if neighbors > 1:
@@ -138,13 +137,11 @@ def wec_draw(agent):
     
 
 model_params = {
-    "seed": Slider(
-        label="Random Seed",
-        value=42,
-        min=0,
-        max=100,
-        step=1,
-    ),
+    "seed": {
+        "type": "InputText",
+        "value": 42,
+        "label": "Random Seed",
+    },
     "width": {
         "type": "InputText",
         "value": 100,
@@ -214,13 +211,16 @@ model_params = {
 }
 
 
-# reuse your component lists
+# component lists
 comps = [
     make_space_component(agent_portrayal=wec_draw, backend="matplotlib"),
+   # make_plot_component(measure="count_agent_in_zone"),
+    make_plot_component(measure="mean_energy_harvested"),
+    make_plot_component(measure="net_energy_harvested"),
+    make_plot_component(measure="total_energy_harvested"),
     make_plot_component(measure="avg_battery"),
     make_plot_component(measure="connections"),
     make_plot_component(measure="total_load"),
-    make_plot_component(measure="cumulative_load"),
 ]
 
 # ─── two little wrapper components ────────────────────────────────────────
