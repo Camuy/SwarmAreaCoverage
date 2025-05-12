@@ -8,7 +8,7 @@ from mesa.space import PropertyLayer
 
 
 class Ocean(PropertyLayer):
-    def __init__(self, width: int = 100, height: int = 100, max_power:int = 1):
+    def __init__(self,  width: int = 100, height: int = 100, max_power:int = 1, seed: int = 42):
         super().__init__(name="Ocean", width=width, height=height, default_value=1)
         self.width = width
         self.height = height
@@ -16,10 +16,12 @@ class Ocean(PropertyLayer):
         # self.power = self.create_env()
         self.sigma = 15
         self.index=1
+        self.seed = seed
+
 
 
     def modify_ocean(self):
-        np.random.seed(66)   #same initial ocean for both environment
+        np.random.seed(self.seed)   #same initial ocean for both environment
         rand_power = np.random.rand(self.width, self.height)
         power_distribution = gaussian_filter(rand_power, sigma=self.sigma)  # più sigma = più liscio
         norm = np.dot(np.divide(power_distribution - np.min(power_distribution), np.max(power_distribution) - np.min(power_distribution)), self.max_power)

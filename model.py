@@ -30,11 +30,11 @@ class WECswarm(Model):
         width=100,
         height=100,
         speed=1,
-        vision=10,
+        vision=20,
         separation=5,
-        efficiency=0.3,
+        efficiency=0.6,
         consume=1,
-        battery=50,
+        battery=30,
         load = 0,
         seed=10,
     ):
@@ -52,11 +52,10 @@ class WECswarm(Model):
             match: Weight of alignment behavior (default: 0.05)
             seed: Random seed for reproducibility (default: None)
         """
-        self.rng = default_rng(seed)                #To make the initial positioning of the agents in the Static and Dynamic environment simillar we add this
         super().__init__(seed=seed)
-        self.agent_angles = np.zeros(
-            population_size
-        )  # holds the angle representing the direction of all agents at a given step
+        self.rng = default_rng(seed=seed)                #To make the initial positioning of the agents in the Static and Dynamic environment simillar we add this
+
+        self.cumulative_load = 0.0
 
         # Set up the space
         self.space = ContinuousSpace(
@@ -66,7 +65,7 @@ class WECswarm(Model):
             n_agents=population_size,
         )
 
-        self.power = Ocean(width=width, height=height, max_power = 1)
+        self.power = Ocean(width=width, height=height, max_power = 1, seed=seed)
         self.power.modify_ocean()
 
         
@@ -165,8 +164,12 @@ class WECSTATIC(Model):
         population_size=100,
         width=100,
         height=100,
-        efficiency=0.3,
-        battery=50,
+        speed=1,
+        vision=20,
+        separation=5,
+        efficiency=0.6,
+        consume=1,
+        battery=30,
         load = 0,
         seed=10,
     ):
@@ -184,12 +187,10 @@ class WECSTATIC(Model):
             match: Weight of alignment behavior (default: 0.05)
             seed: Random seed for reproducibility (default: None)
         """
-        self.rng = default_rng(seed)            #To make the initial positioning of the agents in the Static and Dynamic environment similar, we add this
         super().__init__(seed=seed)
+        self.rng = default_rng(seed=seed)                #To make the initial positioning of the agents in the Static and Dynamic environment simillar we add this
+
         self.cumulative_load = 0.0
-        self.agent_angles = np.zeros(
-            population_size
-        )  # holds the angle representing the direction of all agents at a given step
 
         # Set up the space
         self.space = ContinuousSpace(
@@ -199,7 +200,7 @@ class WECSTATIC(Model):
             n_agents=population_size,
         )
 
-        self.power = Ocean(width=width, height=height, max_power = 1)
+        self.power = Ocean(width=width, height=height, max_power = 1, seed=seed)
         self.power.modify_ocean()
 
         
@@ -209,25 +210,38 @@ class WECSTATIC(Model):
 
         # Create and place the Boid agents
         positions = self.rng.random(size=(population_size, 2)) * self.space.size
+        directions = self.rng.uniform(-1, 1, size=(population_size, 2))
         STATIC.create_agents(
             self,
             population_size,
             self.space,
             position=positions,
+            max_speed=speed,
+            speed = 0,
+            direction=directions,
+            separation=separation,
+            vision=vision,
+            consume=consume,
             efficiency=efficiency,
             battery=battery,
             load = load,
         )
 
         model_reporter = {
-            "energy_harvested": lambda m: np.mean([a.energy_harvested for a in m.agents]),
+            "mean_energy_harvested": lambda m: np.mean([a.energy_harvested for a in m.agents]),
+            "net_energy_harvested": lambda m: np.mean([a.energy_harvested for a in m.agents]) - np.mean([a.consume for a in m.agents]),
+            "total_energy_harvested": lambda m: np.sum([a.total_energy_harvested for a in m.agents]),
+         #   "count_agent_in_zone"= count_agent_in_zone ,
             "avg_battery": lambda m: np.mean([a.battery for a in m.agents]),
-            "load_per_step":  lambda m: sum(a.load for a in m.agents),
-            "total_load":    lambda m: m.cumulative_load 
+            "connections": lambda m: np.sum([len(a.neighbors) for a in m.agents]),
+            "total_load": lambda m: np.multiply(np.divide(np.sum([a.load for a in m.agents]), population_size), 100)
         }
 
         agent_reporter = {
-            "energy harvested": lambda a: a.energy_harvested,
+            "mean_energy_harvested": lambda a: a.energy_harvested,
+            "net_energy_harvested": lambda a : a.energy_harvested,
+            "total_energy_harvested": lambda a: a.total_energy_harvested,
+      #      "count_agent_in_zone": lambda a : a.count_agent_in_zone,
             "battery": lambda a: a.battery,
             "WEC_power": lambda a: a.WEC_power
         }
@@ -235,21 +249,44 @@ class WECSTATIC(Model):
 
         self.datacollector = DataCollector(model_reporters=model_reporter, agent_reporters=agent_reporter)
 
+        # For tracking statistics
+        self.average_heading = None
+        self.update_average_heading()
+        #self.datacollector.collect(self)
+        self.count = 0
 
+
+    # vectorizing the calculation of angles for all agents
+    def calculate_angles(self):
+        d1 = np.array([agent.direction[0] for agent in self.agents])
+        d2 = np.array([agent.direction[1] for agent in self.agents])
+        self.agent_angles = np.degrees(np.arctan2(d1, d2))
+        for agent, angle in zip(self.agents, self.agent_angles):
+            agent.angle = angle
+
+    def update_average_heading(self):
+        """Calculate the average heading (direction) of all Boids."""
+        if not self.agents:
+            self.average_heading = 0
+            return
+
+        headings = np.array([agent.direction for agent in self.agents])
+        mean_heading = np.mean(headings, axis=0)
+        self.average_heading = np.arctan2(mean_heading[1], mean_heading[0])
 
     def step(self):
         """Run one step of the model.
         All agents are activated in random order using the AgentSet shuffle_do method.
         """
         self.agents.shuffle_do("step")
+        self.update_average_heading()
+        self.calculate_angles()
         self.datacollector.collect(self)
-        self.cumulative_load += sum(a.load for a in self.agents)
         #self.count += 1
         #if self.count == 300:
         #    self.power.modify_ocean()
         #    self.count = 0
         self.power.update()
-        # finish of step
 
 class WECgp(Model):
     """Flocker model class. Handles agent creation, placement and scheduling."""
@@ -260,11 +297,11 @@ class WECgp(Model):
         width=100,
         height=100,
         speed=1,
-        vision=10,
+        vision=20,
         separation=5,
-        efficiency=0.3,
+        efficiency=0.6,
         consume=1,
-        battery=50,
+        battery=30,
         load = 0,
         seed=10,
     ):
@@ -282,11 +319,10 @@ class WECgp(Model):
             match: Weight of alignment behavior (default: 0.05)
             seed: Random seed for reproducibility (default: None)
         """
-        self.rng = default_rng(seed)                #To make the initial positioning of the agents in the Static and Dynamic environment simillar we add this
         super().__init__(seed=seed)
-        self.agent_angles = np.zeros(
-            population_size
-        )  # holds the angle representing the direction of all agents at a given step
+        self.rng = default_rng(seed=seed)                #To make the initial positioning of the agents in the Static and Dynamic environment simillar we add this
+
+        self.cumulative_load = 0.0
 
         # Set up the space
         self.space = ContinuousSpace(
@@ -296,7 +332,7 @@ class WECgp(Model):
             n_agents=population_size,
         )
 
-        self.power = Ocean(width=width, height=height, max_power = 1)
+        self.power = Ocean(width=width, height=height, max_power = 1, seed=seed)
         self.power.modify_ocean()
 
         

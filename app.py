@@ -137,11 +137,13 @@ def wec_draw(agent):
     
 
 model_params = {
-    "seed": {
-        "type": "InputText",
-        "value": 42,
-        "label": "Random Seed",
-    },
+    "seed": Slider(
+        label="Random Seed",
+        value=42,
+        min=0,
+        max=100,
+        step=1,
+    ),
     "width": {
         "type": "InputText",
         "value": 100,
@@ -161,7 +163,7 @@ model_params = {
     ),
     "speed": Slider(
         label="Max speed of WEC",
-        value=0.5,
+        value=0.1,
         min=0,
         max=1,
         step=0.01,
@@ -175,14 +177,14 @@ model_params = {
     ),
     "separation": Slider(
         label="Minimum Separation",
-        value=9,
+        value=5,
         min=1,
         max=30,
         step=1,
     ),
     "efficiency": Slider(
         label="Conversion efficiency",
-        value=0.70,
+        value=0.60,
         min=0,
         max=1,
         step=0.01,
@@ -245,7 +247,7 @@ def GPPage():
         model,
         components = comps,
         model_params = model_params,
-        name="Dynamic WECs",
+        name="Gaussian Process WECs",
     )
 
 @solara.component
