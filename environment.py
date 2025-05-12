@@ -2,7 +2,6 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 from matplotlib import pyplot as plt
 
-from mesa import Model
 from mesa.space import PropertyLayer
 
 
@@ -19,9 +18,11 @@ class Ocean(PropertyLayer):
         self.index=1
         self.seed = seed
 
+
+
     def modify_ocean(self):
         np.random.seed(self.seed)   #same initial ocean for both environment
-        rand_power = np.random.rand(self.width, self.height)        
+        rand_power = np.random.rand(self.width, self.height)
         power_distribution = gaussian_filter(rand_power, sigma=self.sigma)  # più sigma = più liscio
         norm = np.dot(np.divide(power_distribution - np.min(power_distribution), np.max(power_distribution) - np.min(power_distribution)), self.max_power)
 
@@ -71,7 +72,8 @@ class Ocean(PropertyLayer):
  
     def update(self):
         # Crea una perturbazione casuale      
-        
+
+        self.index += 1
         np.random.seed(self.index)
         perturbation = np.random.randn(self.width, self.height) * 0.15   
         self.index+=1   #changing the random number during the time
