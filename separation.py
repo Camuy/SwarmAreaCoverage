@@ -24,14 +24,16 @@ def estimate_probability(data, lower=None, upper=None):
         upper = np.inf
     
     mu, std = stats.norm.fit(data)
-    prob = stats.norm.cdf(upper, mu, std) - stats.norm.cdf(lower, mu, std)
-    print(prob)
+    prob = np.multiply(stats.norm.cdf(upper, mu, std) - stats.norm.cdf(lower, mu, std), 1)
+    #print(prob)
 
     return prob
 
 def separation(s_min, agent_power, neighbours_power):
-    print(neighbours_power)
-    s = np.multiply(s_min, 2 - estimate_probability(data=neighbours_power, upper=agent_power))
+    #print(neighbours_power)
+    s = np.multiply(s_min, 2.25 - np.multiply(estimate_probability(data=neighbours_power, upper=agent_power), 1.25))
     if s < s_min:
-            s = s_min
+        s = s_min
+
+    print(s)
     return s

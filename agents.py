@@ -197,7 +197,8 @@ class WEC(ContinuousSpaceAgent):
     def get_separation(self):
         #print("separation at step ", self.step_number," = ", self.separation)
         neighbors_power = [self.model.power.get_power(n.position) for n in self.neighbors]
-        return separation(s_min=self.min_separation, agent_power=self.model.power.get_power(self.position), neighbours_power=neighbors_power)
+        self.separation = separation(s_min=self.min_separation, agent_power=self.model.power.get_power(self.position), neighbours_power=neighbors_power)
+        return
 
         
     def zone_counting(self):
@@ -502,18 +503,8 @@ class GP(ContinuousSpaceAgent):
   
     def get_separation(self):
         #print("separation at step ", self.step_number," = ", self.separation)
-        self.separation += np.multiply(1 - np.divide(self.battery + 40, 100), 2)
-        if self.separation < self.min_separation:
-            self.separation = self.min_separation
-        if self.energy_harvested < self.mean_energy_harvested:
-            self.separation = np.multiply(self.min_separation - 1, 3)
-
-        else:
-            self.separation  = np.multiply(self.min_separation, 2) - 1
-                
-        if self.separation > self.vision:
-            print("separation is bigger than the vision of agent")
-            self.separation = self.vision
+        neighbors_power = [self.model.power.get_power(n.position) for n in self.neighbors]
+        self.separation = separation(s_min=self.min_separation, agent_power=self.model.power.get_power(self.position), neighbours_power=neighbors_power)
         return
 
         
