@@ -206,8 +206,6 @@ class WEC(ContinuousSpaceAgent):
             print("separation is bigger than the vision of agent")
             self.separation = self.vision
         return
-
-        
     def zone_counting(self):
          
         if self.position[0] > 40 and self.position[0] < 60 and self.position[1] > 40 and self.position[1] <60:
@@ -222,7 +220,8 @@ class WEC(ContinuousSpaceAgent):
 
         self.energy_harvested = self.model.power.get_power(self.position)
 
-        self.total_energy_harvested += self.energy_harvested     
+        self.total_energy_harvested += self.energy_harvested
+        
         neighbor_energies = [a.energy_harvested for a in self.neighbors]
         self.mean_energy_harvested = np.mean(neighbor_energies)
         print("mean energy at step ",self.step_number," of neighbors = ", self.mean_energy_harvested)
