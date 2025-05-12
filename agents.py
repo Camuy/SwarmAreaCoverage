@@ -197,10 +197,10 @@ class WEC(ContinuousSpaceAgent):
         if self.separation < self.min_separation:
             self.separation = self.min_separation
         if self.energy_harvested < self.mean_energy_harvested:
-            self.separation = np.multiply(self.min_separation - 1, 3)
+            self.separation = np.multiply(self.min_separation , 1.2)
 
         else:
-            self.separation  = np.multiply(self.min_separation, 2) - 1
+            self.separation  = np.multiply(self.min_separation, 0.8)
                 
         if self.separation > self.vision:
             print("separation is bigger than the vision of agent")
