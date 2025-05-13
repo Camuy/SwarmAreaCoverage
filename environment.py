@@ -73,10 +73,10 @@ class Ocean(PropertyLayer):
     def update(self):
         # Crea una perturbazione casuale      
 
-        self.index += 1
-        np.random.seed(self.index)
-        perturbation = np.random.randn(self.width, self.height) * 0.15   
-        self.index+=1   #changing the random number during the time
+        #self.index += 1
+        #np.random.seed(self.index)
+        perturbation = np.random.randn(self.width, self.height) * 1   
+        #self.index+=1   #changing the random number during the time
     
         # Applica la perturbazione alla distribuzione attuale
         power_distribution = self.data + gaussian_filter(perturbation, sigma=self.sigma)
