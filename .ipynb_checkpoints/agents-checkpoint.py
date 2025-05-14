@@ -197,21 +197,25 @@ class WEC(ContinuousSpaceAgent):
         if self.separation < self.min_separation:
             self.separation = self.min_separation
         if self.energy_harvested < self.mean_energy_harvested:
-            self.separation = np.multiply(self.min_separation - 1, 3)
+            self.separation = np.multiply(self.min_separation , 1.2)
 
         else:
-            self.separation  = np.multiply(self.min_separation, 2) - 1
+            self.separation  = np.multiply(self.min_separation, 0.8)
                 
         if self.separation > self.vision:
             print("separation is bigger than the vision of agent")
             self.separation = self.vision
         return
+
+        
     def zone_counting(self):
          
-        if self.position[0] > 40 and self.position[0] < 60 and self.position[1] > 40 and self.position[1] <60:
+        if self.position[0] > 80 and self.position[0] < 100 and self.position[1] > 45 and self.position[1] <75:
            # print( "position: ", self.position)
-            self.count_agent_in_zone += 1
+            self.count_agent_in_zone = 1
             print( "number of the agents in the zone: ", self.count_agent_in_zone)
+        else:
+            self.count_agent_in_zone = 0
 
         
             
@@ -220,11 +224,10 @@ class WEC(ContinuousSpaceAgent):
 
         self.energy_harvested = self.model.power.get_power(self.position)
 
-        self.total_energy_harvested += self.energy_harvested
-        
+        self.total_energy_harvested += self.energy_harvested     
         neighbor_energies = [a.energy_harvested for a in self.neighbors]
         self.mean_energy_harvested = np.mean(neighbor_energies)
-        print("mean energy at step ",self.step_number," of neighbors = ", self.mean_energy_harvested)
+       # print("mean energy at step ",self.step_number," of neighbors = ", self.mean_energy_harvested)
         
     #    self.total_energy_harvested = (lambda m: np.sum([a.energy_harvested for a in m.agents]))(self.model)
     #    print("total energy at step ",self.step_number," = ", self.total_energy_harvested)
