@@ -75,7 +75,7 @@ class Ocean(PropertyLayer):
 
         #self.index += 1
         #np.random.seed(self.index)
-        perturbation = np.random.randn(self.width, self.height) * 1   
+        perturbation = np.random.randn(self.width, self.height) * 0.5   
         #self.index+=1   #changing the random number during the time
     
         # Applica la perturbazione alla distribuzione attuale
