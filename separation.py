@@ -31,9 +31,22 @@ def estimate_probability(data, lower=None, upper=None):
 
 def separation(s_min, agent_power, neighbours_power):
     #print(neighbours_power)
-    s = np.multiply(s_min, 2.25 - np.multiply(estimate_probability(data=neighbours_power, upper=agent_power), 1.25))
-    if s < s_min:
-        s = s_min
-
-    print(s)
+    s = 1.5 - estimate_probability(data=neighbours_power, upper=agent_power)
     return s
+
+def separation_old(self):
+        
+    #print("separation at step ", self.step_number," = ", self.separation)
+    self.separation += np.multiply(1 - np.divide(self.battery + 40, 100), 2)
+    if self.separation < self.min_separation:
+        self.separation = self.min_separation
+    if self.energy_harvested < self.mean_energy_harvested:
+        self.separation = np.multiply(self.min_separation - 1, 3)
+
+    else:
+        self.separation  = np.multiply(self.min_separation, 2) - 1
+                
+    if self.separation > self.vision:
+        print("separation is bigger than the vision of agent")
+        self.separation = self.vision
+    return

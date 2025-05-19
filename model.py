@@ -111,7 +111,6 @@ class WECswarm(Model):
             "WEC_power": lambda a: a.WEC_power
         }
 
-
         self.datacollector = DataCollector(model_reporters=model_reporter, agent_reporters=agent_reporter)
 
         # For tracking statistics
@@ -152,6 +151,7 @@ class WECswarm(Model):
         #    self.power.modify_ocean()
         #    self.count = 0
         self.power.update()
+        print(np.sum([a.total_energy_harvested for a in self.agents]))
 
 
 
@@ -419,3 +419,4 @@ class WECgp(Model):
         #    self.power.modify_ocean()
         #    self.count = 0
         self.power.update()
+        print(np.sum([a.total_energy_harvested for a in self.agents]))

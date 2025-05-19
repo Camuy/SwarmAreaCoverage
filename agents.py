@@ -5,12 +5,13 @@ of flocking behavior.
 """
 
 import numpy as np
+from scipy import stats
 
 from mesa.experimental.continuous_space import ContinuousSpaceAgent
 from mesa import DataCollector
 
 from direction import get_direction as dir
-from separation import separation
+from separation import separation, separation_old
 
 class WEC(ContinuousSpaceAgent):
     """A Boid-style flocker agent.
@@ -195,9 +196,25 @@ class WEC(ContinuousSpaceAgent):
         return
   
     def get_separation(self):
-        #print("separation at step ", self.step_number," = ", self.separation)
+
         neighbors_power = [self.model.power.get_power(n.position) for n in self.neighbors]
-        self.separation = separation(s_min=self.min_separation, agent_power=self.model.power.get_power(self.position), neighbours_power=neighbors_power)
+
+        filtered_separations = [n.separation for n in self.neighbors if np.isfinite(n.separation)]
+        if filtered_separations:
+            mu, _ = stats.norm.fit(filtered_separations)
+        else:
+            mu = self.min_separation
+        
+        #self.separation = np.multiply(separation(s_min=self.min_separation, agent_power=self.model.power.get_power(self.position), neighbours_power=neighbors_power), mu)
+        #print([n.separation for n in self.neighbors])
+        #print(self.separation)
+        separation_old(self=self)
+        
+        if self.separation < self.min_separation:
+            self.separation = self.min_separation
+        #if self.separation > self.vision:
+        #    self.separation = self.vision - self.min_separation
+
         return
 
         
@@ -502,9 +519,25 @@ class GP(ContinuousSpaceAgent):
         return
   
     def get_separation(self):
-        #print("separation at step ", self.step_number," = ", self.separation)
+
         neighbors_power = [self.model.power.get_power(n.position) for n in self.neighbors]
-        self.separation = separation(s_min=self.min_separation, agent_power=self.model.power.get_power(self.position), neighbours_power=neighbors_power)
+
+        filtered_separations = [n.separation for n in self.neighbors if np.isfinite(n.separation)]
+        if filtered_separations:
+            mu, _ = stats.norm.fit(filtered_separations)
+        else:
+            mu = self.min_separation
+        
+        self.separation = np.multiply(separation(s_min=self.min_separation, agent_power=self.model.power.get_power(self.position), neighbours_power=neighbors_power), mu)
+        #print([n.separation for n in self.neighbors])
+        #print(self.separation)
+        #separation_old(self=self)
+        
+        if self.separation < self.min_separation:
+            self.separation = self.min_separation
+        if self.separation > self.vision:
+            self.separation = 3*self.min_separation
+
         return
 
         
